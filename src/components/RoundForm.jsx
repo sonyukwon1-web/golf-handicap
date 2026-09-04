@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MEMBERS } from '../lib/handicap.js'
+import { MEMBERS, fmtDate } from '../lib/handicap.js'
 import { newId } from '../lib/storage.js'
 import RoundFields from './RoundFields.jsx'
 
@@ -64,9 +64,21 @@ export default function RoundForm({ onSave }) {
       }
     }
 
-    onSave(touched.map(toRound))
+    const { added, skipped } = onSave(touched.map(toRound)) || {}
+
+    if (skipped?.length) {
+      const { existing } = skipped[0]
+      setError(
+        `${skipped.length}개가 이미 등록된 라운드입니다 — ${fmtDate(existing.date)}` +
+        `${existing.course ? ` ${existing.course}` : ''}. ` +
+        (added?.length ? `나머지 ${added.length}개만 저장했습니다.` : '저장하지 않았습니다.'),
+      )
+      if (!added?.length) return
+    } else {
+      setError('')
+    }
+
     setDrafts([blankDraft(touched[touched.length - 1].date)])
-    setError('')
   }
 
   return (

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
 import { HOLES, completeTotal, emptyOvers, emptyPars, grossOf } from '../lib/holes.js'
+import { fmtDate } from '../lib/handicap.js'
 import { newId } from '../lib/storage.js'
 import HoleGrid from './HoleGrid.jsx'
 import ScorecardImport from './ScorecardImport.jsx'
@@ -66,7 +67,7 @@ export default function HoleRoundForm({ onSave }) {
       holes[m] = isPlayer ? [...draft.overs[m]] : null
     }
 
-    onSave([{
+    const { skipped } = onSave([{
       id: newId(),
       date: draft.date,
       course: draft.course.trim(),
@@ -78,7 +79,16 @@ export default function HoleRoundForm({ onSave }) {
       scores,
       penalty: null,
       createdAt: Date.now(),
-    }])
+    }]) || {}
+
+    if (skipped?.length) {
+      const { existing } = skipped[0]
+      setError(
+        `이미 등록된 라운드입니다 — ${fmtDate(existing.date)}${existing.course ? ` ${existing.course}` : ''}. ` +
+        `같은 날짜에 네 명의 타수가 모두 같습니다.`,
+      )
+      return
+    }
 
     setDraft(blank())
     setClaimedTotals({})

@@ -237,6 +237,21 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
 
       {phase === 'mapping' && result && (
         <div className="ocr-map">
+          {/* 읽어낸 라운드 정보를 먼저 보여준다. 아래 폼까지 내려가야 보이면 빠진 줄 안다. */}
+          <ul className="meta-read">
+            {[
+              { key: 'date', label: '날짜', value: result.date },
+              { key: 'course', label: '골프장', value: result.course },
+              { key: 'holes', label: '코스', value: [result.courseFront, result.courseBack].filter(Boolean).join('-') },
+              { key: 'tee', label: '티오프', value: result.teeTime },
+            ].map(({ key, label, value }) => (
+              <li key={key} className={value ? '' : 'missing'}>
+                <span className="mr-label">{label}</span>
+                <b>{value || '못 읽음'}</b>
+              </li>
+            ))}
+          </ul>
+
           <p className="map-desc">
             {unresolved.length === 0 ? (
               <>모든 줄을 알아냈습니다. 아래 값을 확인하고 표에 채우세요.</>

@@ -9,6 +9,7 @@ import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
+import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
 const TABS = [
@@ -57,13 +58,30 @@ export default function App() {
   const rounds = data.rounds
   const roundCount = rounds.length
 
+  /**
+   * 이미 등록된 라운드는 건너뛴다. 무엇이 저장되고 무엇이 걸렸는지 돌려주어
+   * 입력 화면이 그 자리에서 알려줄 수 있게 한다.
+   */
   const addRounds = (list) => {
-    setData((d) => ({ ...d, rounds: [...d.rounds, ...list] }))
-    setMessage({ kind: 'info', text: `${list.length}개 라운드가 저장되었습니다.` })
+    const added = []
+    const skipped = []
+    let pool = rounds
 
-    // 오늘 친 결과를 넣었을 때만 발표한다.
-    // 과거 스코어카드를 여러 장 몰아 넣는 중이라면 축포는 방해만 된다.
-    if (list.length === 1) setCelebrateId(list[0].id)
+    for (const round of list) {
+      const dup = findDuplicate(pool, round)
+      if (dup) skipped.push({ round, existing: dup })
+      else { added.push(round); pool = [...pool, round] }
+    }
+
+    if (added.length > 0) {
+      setData((d) => ({ ...d, rounds: [...d.rounds, ...added] }))
+      setMessage({ kind: 'info', text: `${added.length}개 라운드가 저장되었습니다.` })
+      // 오늘 친 결과를 넣었을 때만 발표한다.
+      // 과거 스코어카드를 여러 장 몰아 넣는 중이라면 축포는 방해만 된다.
+      if (added.length === 1) setCelebrateId(added[0].id)
+    }
+
+    return { added, skipped }
   }
 
   const updateRound = (next) =>
