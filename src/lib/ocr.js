@@ -4,9 +4,15 @@
 //  - text  : 한글+영문. 골프장/코스/날짜와 플레이어 이름 줄을 읽는다.
 //  - digits: 영문 + 숫자만 허용. 표 안의 숫자는 이쪽이 훨씬 정확하다.
 
-const workers = { text: null, digits: null }
+const workers = { text: null, digits: null, digitsBlock: null }
 
-const LANGS = { text: ['kor', 'eng'], digits: ['eng'] }
+const LANGS = { text: ['kor', 'eng'], digits: ['eng'], digitsBlock: ['eng'] }
+
+// 6  = 균일한 블록 하나로 본다 (깔끔한 표에 잘 맞는다)
+// 11 = 흩어진 글자를 위치 상관없이 최대한 많이 찾는다.
+//      상태바·제목·요약카드·버튼이 섞인 실제 앱 캡처에서는 이쪽이 훨씬 안전하다.
+//      우리는 격자를 직접 재구성하므로 레이아웃 분석이 필요 없다.
+const PSM = { digits: '11', digitsBlock: '6' }
 
 async function getWorker(kind, onProgress) {
   if (!workers[kind]) {
@@ -20,10 +26,10 @@ async function getWorker(kind, onProgress) {
       },
     })
       .then(async (worker) => {
-        if (kind === 'digits') {
+        if (PSM[kind]) {
           await worker.setParameters({
             tessedit_char_whitelist: '0123456789-',
-            tessedit_pageseg_mode: '6', // 균일한 텍스트 블록 = 표
+            tessedit_pageseg_mode: PSM[kind],
           })
         }
         return worker

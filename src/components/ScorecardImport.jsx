@@ -63,6 +63,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
   const [assign, setAssign] = useState({}) // rowIndex -> member | ''
   const [rawText, setRawText] = useState('')
   const [diag, setDiag] = useState(null)
+  const [copied, setCopied] = useState(false)
   const [showText, setShowText] = useState(false)
   const [queue, setQueue] = useState([])       // 아직 읽지 않은 카드들
   const [queued, setQueued] = useState(null)   // { index, total }
@@ -88,6 +89,19 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedTick])
 
+  /** 한 가지 설정으로 읽어 본다. 표를 못 찾으면 ok:false 로 돌려준다. */
+  const attempt = async (file, prep, psm, report) => {
+    const prepped = await prepare(file, prep)
+    const textPass = await recognizeWords(prepped.canvas, 'text', report)
+    const digitPass = await recognizeWords(prepped.canvas, psm, report)
+    const parsed = buildTable({ textWords: textPass.words, digitSymbols: digitPass.symbols })
+    return {
+      prepped, textPass, digitPass, ...parsed,
+      score: parsed.blocks.length * 10 + (parsed.diag.playerRows ?? 0),
+      ok: parsed.blocks.length >= 2 && (parsed.diag.playerRows ?? 0) >= 3,
+    }
+  }
+
   const run = async (file) => {
     if (!file) return
     setPhase('working')
@@ -95,30 +109,47 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     setResult(null)
     setRawText('')
     setDiag(null)
+    setCopied(false)
     setProgress({ value: 0.02, note: '사진 준비 중' })
 
     try {
       const report = (value, note) => setProgress({ value, note })
 
-      const prepped = await prepare(file, { scale: 2 })
-      const canvas = prepped.canvas
+      // 큰 쪽이 정확하지만 휴대폰에서는 메모리가 모자랄 수 있다.
+      // 정확한 설정부터 시도하고, 표를 못 찾으면 점점 작고 다른 방식으로 물러선다.
+      const plans = [
+        { prep: { scale: 2, maxPixels: 1.4e7 }, psm: 'digits', note: '숫자 읽는 중' },
+        { prep: { scale: 2, maxPixels: 1.4e7 }, psm: 'digitsBlock', note: '숫자 다시 읽는 중' },
+        { prep: { scale: 1, maxPixels: 4e6 }, psm: 'digits', note: '작게 줄여 다시 읽는 중' },
+      ]
 
-      report(0.55, '글자 읽는 중')
-      const textPass = await recognizeWords(canvas, 'text', report)
-
-      report(0.8, '숫자 읽는 중')
-      const digitPass = await recognizeWords(canvas, 'digits', report)
-
-      setRawText(`[글자]\n${textPass.text}\n\n[숫자만]\n${digitPass.text}`)
-
-      let meta = readHeader(textPass.text)
-
-      // 상단 머리글은 진한 배경에 흰 글씨인 경우가 많아 전체 인식에서 자주 누락된다.
-      // 못 찾은 항목이 있으면 위쪽 띠만 크게 확대하고 명암을 맞춰 한 번 더 읽는다.
-      if (!meta.date || !meta.teeTime || !meta.course) {
-        report(0.9, '날짜·골프장 다시 읽는 중')
+      let best = null
+      for (const [i, plan] of plans.entries()) {
+        report(0.55 + i * 0.12, plan.note)
+        let tried
         try {
-          const strip = await prepare(file, { scale: 3, top: 0, bottom: 0.22, autoInvert: true })
+          tried = await attempt(file, plan.prep, plan.psm, report)
+        } catch (e) {
+          // 큰 이미지에서 메모리가 터지는 경우가 있다. 다음(더 작은) 설정으로 넘어간다.
+          if (i === plans.length - 1) throw e
+          continue
+        }
+        if (!best || tried.score > best.score) best = tried
+        if (tried.ok) break
+      }
+
+      if (!best) throw new Error('사진을 처리하지 못했습니다')
+
+      report(0.9, '정리하는 중')
+      setRawText(`[글자]\n${best.textPass.text}\n\n[숫자만]\n${best.digitPass.text}`)
+      setDiag({ ...best.diag, image: `${best.prepped.source.width}×${best.prepped.source.height}` })
+
+      let meta = readHeader(best.textPass.text)
+
+      if (!meta.date || !meta.teeTime || !meta.course) {
+        report(0.94, '날짜·골프장 다시 읽는 중')
+        try {
+          const strip = await prepare(file, { top: 0, bottom: 0.22, autoInvert: true, target: 2000, maxPixels: 3e6 })
           const headPass = await recognizeWords(strip.canvas, 'text', report)
           const extra = readHeader(headPass.text)
           meta = {
@@ -134,13 +165,10 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         }
       }
 
-      const { blocks, diag: info } = buildTable({ textWords: textPass.words, digitSymbols: digitPass.symbols })
-      setDiag({ ...info, image: `${prepped.source.width}×${prepped.source.height}` })
-
-      if (blocks.length === 0) {
+      if (best.blocks.length === 0) {
         setPhase('error')
         setError(
-          info.textWords === 0
+          best.diag.textWords === 0
             ? '사진에서 글자를 하나도 읽지 못했습니다. 화면 캡처 원본을 그대로 올려 주세요.'
             : 'PAR 행을 찾지 못했습니다. 표 전체(PAR 행과 플레이어 이름)가 잘리지 않은 캡처가 필요합니다.',
         )
@@ -148,8 +176,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         return
       }
 
-      const nines = blocks.slice(0, 2).map(normalizeBlock)
-      // 머리글에서 "Sky-Lake" 를 못 찾았으면, 표마다 붙은 띠에서 가져온다
+      const nines = best.blocks.slice(0, 2).map(normalizeBlock)
       if (!meta.courseFront && !meta.courseBack) {
         meta = { ...meta, courseFront: nines[0]?.courseName || '', courseBack: nines[1]?.courseName || '' }
       }
@@ -180,7 +207,6 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       setPhase('mapping')
     } catch (e) {
       setPhase('error')
-      // 미리보기(아티팩트)처럼 외부 리소스를 막는 곳에서는 인식 모델을 받아올 수 없다.
       const blocked = /dynamically imported module|Failed to fetch|NetworkError|importScripts|Content Security|blocked/i.test(e.message)
       setError(
         blocked
@@ -299,12 +325,33 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         <div className="notice error" role="alert">
           {error}
           {diag && (
+            <>
             <span className="diag">
               읽은 값: 글자 {diag.textWords}개 · 숫자 {diag.digitSymbols}개 · 줄 {diag.textRows}개 ·
               PAR 행 {diag.parRows}개 · 이름 후보 {diag.nameRows}개
               {diag.playerRows !== undefined && ` · 플레이어 행 ${diag.playerRows}개`}
               {diag.image && ` · 사진 ${diag.image}`}
             </span>
+            <button
+              type="button"
+              className="btn sm"
+              style={{ marginTop: 8 }}
+              onClick={() => {
+                const report = [
+                  error,
+                  `읽은 값: 글자 ${diag.textWords} · 숫자 ${diag.digitSymbols} · 줄 ${diag.textRows} · 격자줄 ${diag.gridRows ?? '-'} · PAR ${diag.parRows} · 이름후보 ${diag.nameRows} · 플레이어 ${diag.playerRows ?? '-'} · 사진 ${diag.image}`,
+                  '',
+                  rawText,
+                ].join('\n')
+                navigator.clipboard?.writeText(report).then(
+                  () => setCopied(true),
+                  () => setCopied(false),
+                )
+              }}
+            >
+              {copied ? '복사됨 — 붙여넣어 알려주세요' : '진단 정보 복사'}
+            </button>
+            </>
           )}
         </div>
       )}

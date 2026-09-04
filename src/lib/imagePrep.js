@@ -78,7 +78,22 @@ function invertIfDark(ctx, width, height) {
  * 이미지를 확대 + 그레이스케일 + 대비 보정해서 돌려준다.
  * fraction 을 주면 위에서부터 그 비율만큼만 잘라낸다 (머리글만 읽을 때).
  */
-export async function prepare(file, { scale = 2, top = 0, bottom = 1, maxWidth = 2400, autoInvert = false } = {}) {
+/**
+ * 휴대폰 캡처는 이미 해상도가 높아서 더 키울 필요가 없다.
+ * 오히려 크게 만들면 아이폰 사파리에서 메모리 한계에 걸려 인식이 통째로 망가진다.
+ * 글자 높이가 인식에 충분할 만큼만 맞추고, 전체 픽셀 수에도 상한을 둔다.
+ */
+function pickScale(width, height, { scale, target, maxScale, maxPixels }) {
+  let factor = scale ?? Math.min(maxScale, Math.max(1, target / width))
+  const pixels = width * factor * height * factor
+  if (pixels > maxPixels) factor *= Math.sqrt(maxPixels / pixels)
+  return Math.max(0.5, factor)
+}
+
+export async function prepare(
+  file,
+  { top = 0, bottom = 1, autoInvert = false, scale, target = 1600, maxScale = 3, maxPixels = 6e6 } = {},
+) {
   const image = await loadImage(file)
   if (!image.width || !image.height) {
     image.close()
@@ -87,7 +102,7 @@ export async function prepare(file, { scale = 2, top = 0, bottom = 1, maxWidth =
 
   const sy = Math.round(image.height * top)
   const sh = Math.max(1, Math.round(image.height * bottom) - sy)
-  const factor = Math.min(scale, maxWidth / image.width)
+  const factor = pickScale(image.width, sh, { scale, target, maxScale, maxPixels })
 
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(image.width * factor))
