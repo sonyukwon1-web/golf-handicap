@@ -41,15 +41,19 @@ export async function recognizeWords(image, kind, onProgress) {
   const worker = await getWorker(kind, onProgress)
   const { data } = await worker.recognize(image)
 
+  const box = (b) => ({ x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1 })
+
   const words = (data.words || [])
     .filter((w) => w.text && w.text.trim())
-    .map((w) => ({
-      text: w.text.trim(),
-      confidence: w.confidence ?? 0,
-      x0: w.bbox.x0, x1: w.bbox.x1, y0: w.bbox.y0, y1: w.bbox.y1,
-    }))
+    .map((w) => ({ text: w.text.trim(), confidence: w.confidence ?? 0, ...box(w.bbox) }))
 
-  return { text: data.text || '', words }
+  // 표의 칸을 좌표로 맞추려면 단어가 아니라 글자 단위가 필요하다.
+  // 붙어 있는 칸을 한 단어로 묶어 읽는 경우가 잦기 때문이다.
+  const symbols = (data.symbols || [])
+    .filter((sym) => sym.text && sym.text.trim())
+    .map((sym) => ({ text: sym.text.trim(), confidence: sym.confidence ?? 0, ...box(sym.bbox) }))
+
+  return { text: data.text || '', words, symbols }
 }
 
 export async function disposeOcr() {

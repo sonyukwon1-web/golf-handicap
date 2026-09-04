@@ -29,6 +29,36 @@ function stretchContrast(ctx, width, height) {
   ctx.putImageData(frame, 0, 0)
 }
 
+/**
+ * 파일을 캔버스에 그릴 수 있는 형태로 연다.
+ * createImageBitmap 이 못 여는 형식(사파리의 HEIC 등)은 <img> 로 한 번 더 시도한다.
+ */
+async function loadImage(file) {
+  try {
+    const bitmap = await createImageBitmap(file)
+    return { source: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close?.() }
+  } catch {
+    const url = URL.createObjectURL(file)
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image()
+        el.onload = () => resolve(el)
+        el.onerror = () => reject(new Error('이 형식의 이미지는 열 수 없습니다 (JPG 또는 PNG로 저장해 주세요)'))
+        el.src = url
+      })
+      return {
+        source: img,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        close: () => URL.revokeObjectURL(url),
+      }
+    } catch (e) {
+      URL.revokeObjectURL(url)
+      throw e
+    }
+  }
+}
+
 /** 배경이 어두우면(= 글씨가 밝으면) 뒤집어 어두운 글씨/밝은 배경으로 만든다 */
 function invertIfDark(ctx, width, height) {
   const frame = ctx.getImageData(0, 0, width, height)
@@ -49,24 +79,28 @@ function invertIfDark(ctx, width, height) {
  * fraction 을 주면 위에서부터 그 비율만큼만 잘라낸다 (머리글만 읽을 때).
  */
 export async function prepare(file, { scale = 2, top = 0, bottom = 1, maxWidth = 2400, autoInvert = false } = {}) {
-  const bitmap = await createImageBitmap(file)
+  const image = await loadImage(file)
+  if (!image.width || !image.height) {
+    image.close()
+    throw new Error('이미지 크기를 읽을 수 없습니다')
+  }
 
-  const sy = Math.round(bitmap.height * top)
-  const sh = Math.max(1, Math.round(bitmap.height * bottom) - sy)
-  const factor = Math.min(scale, maxWidth / bitmap.width)
+  const sy = Math.round(image.height * top)
+  const sh = Math.max(1, Math.round(image.height * bottom) - sy)
+  const factor = Math.min(scale, maxWidth / image.width)
 
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(bitmap.width * factor))
+  canvas.width = Math.max(1, Math.round(image.width * factor))
   canvas.height = Math.max(1, Math.round(sh * factor))
 
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bitmap, 0, sy, bitmap.width, sh, 0, 0, canvas.width, canvas.height)
-  bitmap.close?.()
+  ctx.drawImage(image.source, 0, sy, image.width, sh, 0, 0, canvas.width, canvas.height)
+  image.close()
 
   stretchContrast(ctx, canvas.width, canvas.height)
   if (autoInvert) invertIfDark(ctx, canvas.width, canvas.height)
 
-  return { canvas, scale: factor, offsetY: sy * factor }
+  return { canvas, scale: factor, offsetY: sy * factor, source: { width: image.width, height: image.height } }
 }

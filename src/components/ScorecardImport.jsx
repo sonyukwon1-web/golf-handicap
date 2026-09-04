@@ -5,6 +5,9 @@ import { prepare } from '../lib/imagePrep.js'
 import { recognizeWords } from '../lib/ocr.js'
 import { buildTable, nameCandidates, normalizeBlock, readHeader } from '../lib/cardVision.js'
 
+const totalOf = (nineTotals) =>
+  nineTotals.every((v) => Number.isFinite(v)) ? nineTotals[0] + nineTotals[1] : null
+
 const NINE = 9
 const sum = (a) => a.reduce((x, y) => x + (Number.isFinite(y) ? y : 0), 0)
 const filled = (a) => a.filter((v) => Number.isFinite(v)).length
@@ -59,6 +62,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
   const [result, setResult] = useState(null) // { meta, pars, rows }
   const [assign, setAssign] = useState({}) // rowIndex -> member | ''
   const [rawText, setRawText] = useState('')
+  const [diag, setDiag] = useState(null)
   const [showText, setShowText] = useState(false)
   const [queue, setQueue] = useState([])       // 아직 읽지 않은 카드들
   const [queued, setQueued] = useState(null)   // { index, total }
@@ -90,12 +94,14 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     setError('')
     setResult(null)
     setRawText('')
+    setDiag(null)
     setProgress({ value: 0.02, note: '사진 준비 중' })
 
     try {
       const report = (value, note) => setProgress({ value, note })
 
-      const { canvas } = await prepare(file, { scale: 2 })
+      const prepped = await prepare(file, { scale: 2 })
+      const canvas = prepped.canvas
 
       report(0.55, '글자 읽는 중')
       const textPass = await recognizeWords(canvas, 'text', report)
@@ -128,27 +134,30 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         }
       }
 
-      const { blocks } = buildTable({ textWords: textPass.words, digitWords: digitPass.words })
+      const { blocks, diag: info } = buildTable({ textWords: textPass.words, digitSymbols: digitPass.symbols })
+      setDiag({ ...info, image: `${prepped.source.width}×${prepped.source.height}` })
 
       if (blocks.length === 0) {
         setPhase('error')
-        setError('스코어카드의 PAR 행을 찾지 못했습니다. 표 전체가 잘리지 않게 다시 찍어 주세요. 아래 표에 직접 입력해도 됩니다.')
+        setError(
+          info.textWords === 0
+            ? '사진에서 글자를 하나도 읽지 못했습니다. 화면 캡처 원본을 그대로 올려 주세요.'
+            : 'PAR 행을 찾지 못했습니다. 표 전체(PAR 행과 플레이어 이름)가 잘리지 않은 캡처가 필요합니다.',
+        )
         setShowText(true)
         return
       }
 
       const nines = blocks.slice(0, 2).map(normalizeBlock)
-      // 표 위 띠에서 읽은 코스 이름이 있으면 그쪽을 우선한다
-      meta = {
-        ...meta,
-        courseFront: nines[0]?.courseName || meta.courseFront,
-        courseBack: nines[1]?.courseName || meta.courseBack,
+      // 머리글에서 "Sky-Lake" 를 못 찾았으면, 표마다 붙은 띠에서 가져온다
+      if (!meta.courseFront && !meta.courseBack) {
+        meta = { ...meta, courseFront: nines[0]?.courseName || '', courseBack: nines[1]?.courseName || '' }
       }
 
       const merged = mergeNines(nines)
       if (merged.rows.length === 0) {
         setPhase('error')
-        setError('플레이어 행을 찾지 못했습니다. 이름이 나오도록 다시 찍어 주세요.')
+        setError('PAR 행은 찾았지만 플레이어 행을 못 찾았습니다. 이름과 숫자가 함께 보이도록 캡처해 주세요.')
         setShowText(true)
         return
       }
@@ -171,7 +180,14 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       setPhase('mapping')
     } catch (e) {
       setPhase('error')
-      setError(`스코어카드를 읽지 못했습니다: ${e.message}. 아래 표에 직접 입력해 주세요.`)
+      // 미리보기(아티팩트)처럼 외부 리소스를 막는 곳에서는 인식 모델을 받아올 수 없다.
+      const blocked = /dynamically imported module|Failed to fetch|NetworkError|importScripts|Content Security|blocked/i.test(e.message)
+      setError(
+        blocked
+          ? '이 페이지에서는 사진 인식을 쓸 수 없습니다. 미리보기는 외부 리소스를 막고 있어서 한글 인식 모델을 받아오지 못합니다. 배포한 사이트나 로컬(npm run dev)에서 올려 주세요.'
+          : `스코어카드를 읽지 못했습니다 — ${e.message}`,
+      )
+      setShowText(!blocked)
     }
   }
 
@@ -189,6 +205,18 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         if (held !== undefined) next[held] = next[index] || ''
       }
       next[index] = member
+
+      // 성이 겹쳐 후보가 같은 줄이 딱 둘 남았다면, 하나를 고르는 순간 나머지는 정해진다
+      if (member && result) {
+        const pair = nameCandidates(result.rows[index].label)
+        const other = result.rows.findIndex(
+          (r, i) => i !== index && !next[i] &&
+            JSON.stringify(nameCandidates(r.label)) === JSON.stringify(pair),
+        )
+        if (other !== -1 && pair.length === 2) {
+          next[other] = pair.find((m) => m !== member) || ''
+        }
+      }
       return next
     })
 
@@ -209,6 +237,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
   }
 
   const assignedCount = Object.values(assign).filter(Boolean).length
+  const unresolved = result ? result.rows.filter((_, i) => !assign[i]) : []
   const busy = phase === 'working'
 
   return (
@@ -266,7 +295,19 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         </div>
       )}
 
-      {error && <div className="notice error" role="alert">{error}</div>}
+      {error && (
+        <div className="notice error" role="alert">
+          {error}
+          {diag && (
+            <span className="diag">
+              읽은 값: 글자 {diag.textWords}개 · 숫자 {diag.digitSymbols}개 · 줄 {diag.textRows}개 ·
+              PAR 행 {diag.parRows}개 · 이름 후보 {diag.nameRows}개
+              {diag.playerRows !== undefined && ` · 플레이어 행 ${diag.playerRows}개`}
+              {diag.image && ` · 사진 ${diag.image}`}
+            </span>
+          )}
+        </div>
+      )}
       {phase === 'done' && (
         <div className="notice info" role="status">
           아래 표에 채웠습니다. 틀린 칸을 고치고 저장하세요. <b>아직 저장되지 않았습니다.</b>
@@ -276,8 +317,15 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       {phase === 'mapping' && result && (
         <div className="ocr-map">
           <p className="map-desc">
-            읽어낸 줄이 <b>누구인지</b> 지정해 주세요. 카드에는 이름이 가려져 나와서 최진규·최문창은
-            자동으로 구분할 수 없습니다.
+            {unresolved.length === 0 ? (
+              <>모든 줄을 알아냈습니다. 아래 값을 확인하고 표에 채우세요.</>
+            ) : (
+              <>
+                카드에 <b>{unresolved[0].label}</b> 가 여러 줄이라 앱이 구분할 수 없습니다.{' '}
+                <b>{totalOf(unresolved[0].nineTotals) ?? '?'}타</b>를 친 쪽이 누구인지만 골라 주세요.
+                나머지는 자동으로 채워집니다.
+              </>
+            )}
           </p>
 
           <ul className="map-rows">
@@ -288,6 +336,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
                 <li key={i} className={bad ? 'bad' : ''}>
                   <div className="map-main">
                     <span className="map-label">{r.label}</span>
+                    <span className="map-total">{totalOf(r.nineTotals) ?? '–'}<small>타</small></span>
                     <select
                       value={assign[i] || ''}
                       onChange={(e) => choose(i, e.target.value)}
