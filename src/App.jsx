@@ -9,6 +9,7 @@ import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
+import { computeStats } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
@@ -98,6 +99,7 @@ export default function App() {
       rounds: d.rounds.map((r) => (r.id === roundId ? { ...r, penalty: { text, members } } : r)),
     }))
 
+  const { stats } = computeStats(rounds)
   const outcomes = roundOutcomes(rounds)
   const celebrating = celebrateId ? outcomes.find((o) => o.id === celebrateId) : null
   const rouletteRound = rouletteId ? outcomes.find((o) => o.id === rouletteId) : null
@@ -225,7 +227,7 @@ export default function App() {
             </div>
 
             {inputMode === 'holes'
-              ? <HoleRoundForm onSave={addRounds} />
+              ? <HoleRoundForm onSave={addRounds} stats={stats} />
               : <RoundForm onSave={addRounds} />}
           </section>
         )}

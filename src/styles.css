@@ -208,7 +208,9 @@ button { cursor: pointer; }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 
-main { padding-top: 20px; }
+/* .shell 의 `padding: 0 16px` 이 요소 선택자를 이겨서 위쪽 여백이 먹지 않았다.
+   같은 자리에 붙여 우선순위를 맞춘다. */
+main.shell { padding-top: 20px; }
 
 .section { margin-bottom: 28px; }
 .section-head {
@@ -730,7 +732,8 @@ table.data tbody tr:last-child th { border-bottom: 0; }
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   padding: 12px 12px 12px 14px;
-  margin-bottom: 20px;
+  /* 초록 머리 띠 바로 아래에 붙어 답답해 보여서 위쪽을 조금 띄운다 */
+  margin: 8px 0 20px;
 }
 .trash-talk .tt-mic { font-size: 16px; line-height: 1.4; flex-shrink: 0; }
 .trash-talk p {
@@ -1177,58 +1180,6 @@ table.score-grid tr.row-bad td { background: var(--danger-soft); }
 .gt-warn.error { color: var(--danger); font-weight: 700; }
 
 /* ── OCR 플레이어 지정 ────────────────────────────────── */
-.ocr-map { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
-.map-desc { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.55; }
-
-.map-rows { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.map-rows li {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  background: var(--surface-2);
-}
-.map-rows li.bad { border-color: var(--danger); background: var(--danger-soft); }
-
-.map-main { display: flex; align-items: center; gap: 10px; }
-.map-label {
-  font-weight: 700;
-  font-size: 14px;
-  min-width: 52px;
-}
-.map-main select {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.map-nums {
-  margin: 8px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-}
-.map-nums span {
-  min-width: 22px;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  background: var(--surface);
-  border-radius: 4px;
-  padding: 2px 0;
-  color: var(--ink-2);
-}
-.map-nums span.miss { color: var(--ink-3); background: transparent; }
-
-.map-check { margin: 8px 0 0; display: flex; gap: 12px; font-size: 11.5px; font-weight: 600; }
-.map-check.ok { color: var(--green); }
-.map-check.warn { color: var(--ink-3); }
-.map-check.error { color: var(--danger); }
-
 /* ── 홀별 통계 ────────────────────────────────────────── */
 .hole-awards { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .hole-awards li {
@@ -1311,6 +1262,25 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
   line-height: 1.5;
 }
 
+.map-total {
+  font-size: 19px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  text-align: right;
+}
+.map-total small { font-size: 11px; font-weight: 600; color: var(--ink-3); margin-left: 1px; }
+.map-rows li.bad .map-total { color: var(--danger); }
+
+.notice .diag {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
 /* 판독 결과의 라운드 정보 */
 .meta-read {
   list-style: none;
@@ -1327,3 +1297,37 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 .meta-read .mr-label { font-size: 11.5px; color: var(--ink-3); flex-shrink: 0; }
 .meta-read b { font-size: 13.5px; font-weight: 700; overflow-wrap: anywhere; }
 .meta-read li.missing b { color: var(--danger); font-weight: 600; }
+
+/* 아직 누가 누군지 정하지 않은 줄 */
+.map-rows li.needs-pick {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+.map-rows .segmented { flex: 1; background: var(--surface); }
+.map-rows .segmented button { min-height: 36px; font-size: 13.5px; }
+
+/* ── 이름 고르기 팝업 ─────────────────────────────────── */
+.modal.picker { max-width: 460px; }
+
+.pick-row {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  background: var(--surface-2);
+}
+.pick-row + .pick-row { margin-top: 10px; }
+.pick-row.done { border-color: var(--green); background: var(--green-soft); }
+
+.pick-head { display: flex; align-items: center; gap: 10px; }
+.pick-total {
+  font-size: 22px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  min-width: 58px;
+}
+.pick-total small { font-size: 11px; font-weight: 600; color: var(--ink-3); margin-left: 1px; }
+.pick-head .segmented { flex: 1; background: var(--surface); }
+.pick-head .segmented button { min-height: 36px; font-size: 13.5px; }
+
+.pick-row table.map-card { margin-top: 8px; }
+.pick-row table.map-card .t { background: transparent; }

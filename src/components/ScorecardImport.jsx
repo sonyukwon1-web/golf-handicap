@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { MEMBERS } from '../lib/handicap.js'
+import { useEffect, useRef, useState } from 'react'
 import { HOLES } from '../lib/holes.js'
 import { nameCandidates } from '../lib/nameMatch.js'
 import { ApiUnavailable, readScorecard } from '../lib/scorecardApi.js'
+import NamePicker from './NamePicker.jsx'
 
 const NINE = 9
 const sum = (a) => a.reduce((x, y) => x + (Number.isFinite(y) ? y : 0), 0)
@@ -11,20 +11,6 @@ const totalOf = (row) =>
   Number.isFinite(row.frontTotal) && Number.isFinite(row.backTotal)
     ? row.frontTotal + row.backTotal
     : null
-
-/** 각 9홀에 대해 PAR 합계 + 오버 합계 == T 인지 본다 */
-function checkRow(pars, overs, totals) {
-  return [0, NINE].map((from, n) => {
-    const claimed = totals[n]
-    const p = pars.slice(from, from + NINE)
-    const o = overs.slice(from, from + NINE)
-    if (p.some((v) => v === null) || o.some((v) => v === null) || !Number.isFinite(claimed)) {
-      return { ok: null, computed: null, claimed }
-    }
-    const computed = sum(p) + sum(o)
-    return { ok: computed === claimed, computed, claimed }
-  })
-}
 
 /** 한 나인에서 딱 한 칸만 비었으면 T 값으로 되돌린다 */
 function fillSingleGap(pars, overs, total, from) {
@@ -40,6 +26,29 @@ function fillSingleGap(pars, overs, total, from) {
 }
 
 /**
+ * 후보가 하나뿐인 줄만 확정한다 (카드 주인의 실명, 성이 겹치지 않는 이**·손**).
+ *
+ * 최진규·최문창처럼 성이 겹치는 묶음은 **짐작하지 않는다**. 타수가 같든 다르든
+ * 카드만으로는 알 수 없으므로 사람에게 물어본다. 잘못 짐작해서 조용히 들어가는 것보다
+ * 한 번 묻는 편이 낫다.
+ */
+function autoAssign(card) {
+  const assign = {}
+  const taken = new Set()
+
+  card.rows.forEach((r, i) => {
+    const candidates = nameCandidates(r.label).filter((m) => !taken.has(m))
+    if (candidates.length === 1) {
+      assign[i] = candidates[0]
+      taken.add(candidates[0])
+    } else {
+      assign[i] = ''
+    }
+  })
+  return assign
+}
+
+/**
  * 스코어카드 사진에서 홀별 기록 초안을 만든다.
  * 어떤 경우에도 바로 저장하지 않는다 — 사용자가 표에서 확인하고 고친 뒤 저장한다.
  */
@@ -47,8 +56,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
   const [phase, setPhase] = useState('idle')
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
-  const [result, setResult] = useState(null)
-  const [assign, setAssign] = useState({})
+  const [pending, setPending] = useState(null) // 이름을 골라야 하는 줄들
   const [queue, setQueue] = useState([])
   const [queued, setQueued] = useState(null)
   const [dragging, setDragging] = useState(false)
@@ -58,7 +66,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     if (!file) return
     setPhase('working')
     setError('')
-    setResult(null)
+    setPending(null)
     setNote('사진 준비 중')
 
     try {
@@ -77,22 +85,16 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         fillSingleGap(card.pars, row.overs, row.backTotal, NINE)
       }
 
-      // 후보가 하나뿐인 줄만 자동으로 지정한다 (최** 두 명은 사용자가 골라야 한다)
-      const auto = {}
-      const taken = new Set()
-      card.rows.forEach((r, i) => {
-        const candidates = nameCandidates(r.label).filter((m) => !taken.has(m))
-        if (candidates.length === 1) {
-          auto[i] = candidates[0]
-          taken.add(candidates[0])
-        } else {
-          auto[i] = ''
-        }
-      })
+      const assign = autoAssign(card)
+      fill(card, assign) // 알아낸 줄은 곧바로 표에 넣는다
 
-      setResult(card)
-      setAssign(auto)
-      setPhase('mapping')
+      // 성이 겹쳐 카드로는 구분할 수 없는 줄만 팝업으로 묻는다
+      const ask = card.rows
+        .map((r, index) => ({ ...r, index, total: totalOf(r), candidates: nameCandidates(r.label) }))
+        .filter((r) => !assign[r.index] && r.candidates.length > 1)
+
+      setPhase('done')
+      if (ask.length > 0) setPending({ card, assign, rows: ask })
     } catch (e) {
       setPhase('error')
       setError(
@@ -122,36 +124,11 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedTick])
 
-  const checks = useMemo(
-    () => (result ? result.rows.map((r) => checkRow(result.pars, r.overs, [r.frontTotal, r.backTotal])) : []),
-    [result],
-  )
-
-  const choose = (index, member) =>
-    setAssign((prev) => {
-      const next = { ...prev }
-      if (member) {
-        const held = Object.keys(next).find((k) => next[k] === member && Number(k) !== index)
-        if (held !== undefined) next[held] = next[index] || ''
-      }
-      next[index] = member
-
-      // 성이 겹쳐 후보가 같은 줄이 딱 둘 남았다면, 하나를 고르는 순간 나머지는 정해진다
-      if (member && result) {
-        const pair = nameCandidates(result.rows[index].label)
-        const other = result.rows.findIndex(
-          (r, i) => i !== index && !next[i] &&
-            JSON.stringify(nameCandidates(r.label)) === JSON.stringify(pair),
-        )
-        if (other !== -1 && pair.length === 2) next[other] = pair.find((m) => m !== member) || ''
-      }
-      return next
-    })
-
-  const apply = () => {
+  /** 지정된 줄을 아래 표에 넣는다. 따로 누를 단계를 두지 않는다. */
+  const fill = (card, assign) => {
     const overs = {}
     const claimedTotals = {}
-    result.rows.forEach((r, i) => {
+    card.rows.forEach((r, i) => {
       const m = assign[i]
       if (!m) return
       overs[m] = r.overs.slice(0, HOLES)
@@ -160,21 +137,18 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
 
     onDraft({
       meta: {
-        date: result.date,
-        course: result.course,
-        courseFront: result.courseFront,
-        courseBack: result.courseBack,
-        teeTime: result.teeTime,
+        date: card.date,
+        course: card.course,
+        courseFront: card.courseFront,
+        courseBack: card.courseBack,
+        teeTime: card.teeTime,
       },
-      pars: result.pars.slice(0, HOLES),
+      pars: card.pars.slice(0, HOLES),
       overs,
       claimedTotals,
     })
-    setPhase('done')
   }
 
-  const unresolved = result ? result.rows.filter((_, i) => !assign[i]) : []
-  const assignedCount = Object.values(assign).filter(Boolean).length
   const busy = phase === 'working'
 
   return (
@@ -229,85 +203,22 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       )}
 
       {error && <div className="notice error" role="alert">{error}</div>}
-      {phase === 'done' && (
+      {phase === 'done' && !pending && (
         <div className="notice info" role="status">
-          아래 표에 채웠습니다. 틀린 칸을 고치고 저장하세요. <b>아직 저장되지 않았습니다.</b>
+          아래 표에 채웠습니다. 확인하고 <b>저장</b>을 눌러 주세요.
         </div>
       )}
-
-      {phase === 'mapping' && result && (
-        <div className="ocr-map">
-          {/* 읽어낸 라운드 정보를 먼저 보여준다. 아래 폼까지 내려가야 보이면 빠진 줄 안다. */}
-          <ul className="meta-read">
-            {[
-              { key: 'date', label: '날짜', value: result.date },
-              { key: 'course', label: '골프장', value: result.course },
-              { key: 'holes', label: '코스', value: [result.courseFront, result.courseBack].filter(Boolean).join('-') },
-              { key: 'tee', label: '티오프', value: result.teeTime },
-            ].map(({ key, label, value }) => (
-              <li key={key} className={value ? '' : 'missing'}>
-                <span className="mr-label">{label}</span>
-                <b>{value || '못 읽음'}</b>
-              </li>
-            ))}
-          </ul>
-
-          <p className="map-desc">
-            {unresolved.length === 0 ? (
-              <>모든 줄을 알아냈습니다. 아래 값을 확인하고 표에 채우세요.</>
-            ) : nameCandidates(unresolved[0].label).length === 0 ? (
-              <>카드에서 <b>이름을 읽지 못했습니다</b>. 각 줄의 <b>총타수</b>를 보고 누구인지 골라 주세요.</>
-            ) : (
-              <>
-                카드에 <b>{unresolved[0].label}</b> 가 두 줄이라 앱이 구분할 수 없습니다.{' '}
-                <b>{totalOf(unresolved[0]) ?? '?'}타</b>를 친 쪽이 누구인지만 골라 주세요.
-                나머지는 자동으로 채워집니다.
-              </>
-            )}
-          </p>
-
-          <ul className="map-rows">
-            {result.rows.map((r, i) => {
-              const bad = checks[i].some((c) => c.ok === false)
-              const partial = checks[i].some((c) => c.ok === null)
-              return (
-                <li key={i} className={bad ? 'bad' : ''}>
-                  <div className="map-main">
-                    <span className="map-label">{r.label || `${i + 1}번째 줄`}</span>
-                    <span className="map-total">{totalOf(r) ?? '–'}<small>타</small></span>
-                    <select
-                      value={assign[i] || ''}
-                      onChange={(e) => choose(i, e.target.value)}
-                      aria-label={`${r.label || `${i + 1}번째 줄`} 은 누구인지`}
-                    >
-                      <option value="">— 사용 안 함 —</option>
-                      {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-                  <p className="map-nums">
-                    {r.overs.map((v, k) => (
-                      <span key={k} className={v === null ? 'miss' : ''}>{v === null ? '·' : v}</span>
-                    ))}
-                  </p>
-                  <p className={`map-check ${bad ? 'error' : partial ? 'warn' : 'ok'}`}>
-                    {checks[i].map((c, n) => (
-                      <span key={n}>
-                        {n === 0 ? '전반' : '후반'}{' '}
-                        {c.ok === true && `✓ ${c.computed}`}
-                        {c.ok === false && `✗ 계산 ${c.computed} ≠ 카드 ${c.claimed} (${c.computed > c.claimed ? '+' : ''}${c.computed - c.claimed}타)`}
-                        {c.ok === null && '· 확인 불가'}
-                      </span>
-                    ))}
-                  </p>
-                </li>
-              )
-            })}
-          </ul>
-
-          <button type="button" className="btn primary block" onClick={apply} disabled={assignedCount === 0}>
-            이 내용으로 표 채우기
-          </button>
-        </div>
+      {pending && (
+        <NamePicker
+          rows={pending.rows}
+          onCancel={() => setPending(null)}
+          onConfirm={(picks) => {
+            const next = { ...pending.assign }
+            pending.rows.forEach((row, i) => { if (picks[i]) next[row.index] = picks[i] })
+            fill(pending.card, next)
+            setPending(null)
+          }}
+        />
       )}
 
       <p className="foot-note">

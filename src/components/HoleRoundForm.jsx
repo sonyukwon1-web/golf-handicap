@@ -19,7 +19,7 @@ const blank = () => ({
 })
 
 /** 스코어카드 그대로 한 라운드를 홀별로 적는다. OCR 결과도 여기로 들어온다. */
-export default function HoleRoundForm({ onSave }) {
+export default function HoleRoundForm({ onSave, stats }) {
   const [draft, setDraft] = useState(blank)
   const [claimedTotals, setClaimedTotals] = useState({})
   const [error, setError] = useState('')
@@ -36,10 +36,10 @@ export default function HoleRoundForm({ onSave }) {
       courseBack: meta.courseBack || d.courseBack,
       teeTime: meta.teeTime || d.teeTime,
       pars: pars.map((v, i) => (Number.isFinite(v) ? v : d.pars[i])),
-      overs: {
-        ...d.overs,
-        ...Object.fromEntries(Object.entries(overs).map(([m, row]) => [m, row.slice(0, HOLES)])),
-      },
+      // 지정된 사람만 채우고 나머지는 비운다. 지정을 바꿨을 때 옛 값이 남으면 안 된다.
+      overs: Object.fromEntries(
+        MEMBERS.map((m) => [m, overs[m] ? overs[m].slice(0, HOLES) : emptyOvers()]),
+      ),
     }))
     setClaimedTotals(claimed || {})
     setError('')
@@ -98,7 +98,7 @@ export default function HoleRoundForm({ onSave }) {
 
   return (
     <form onSubmit={submit} noValidate>
-      <ScorecardImport onDraft={applyOcr} savedTick={savedTick} />
+      <ScorecardImport onDraft={applyOcr} savedTick={savedTick} stats={stats} />
 
       {error && <div className="notice error" role="alert">{error}</div>}
 
