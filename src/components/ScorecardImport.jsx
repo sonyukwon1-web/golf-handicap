@@ -28,6 +28,36 @@ function fillSingleGap(pars, overs, total, from) {
   if (value >= -4 && value <= 12) overs[from + missing[0]] = value
 }
 
+/**
+ * 합계가 딱 2·v 만큼 크면, 값이 v 인 칸 하나의 부호가 뒤집힌 것이다.
+ *
+ * 버디를 나비 아이콘 안에 -1 로 그려 넣는 카드가 있는데, 그림이 글자를 가려서
+ * 마이너스를 놓치고 +1 로 읽는다. 후보가 여럿이면 인식 확신도가 가장 낮은 칸을
+ * 고른다 — 그림에 가려진 칸이 바로 그 칸이다.
+ */
+function repairFlippedSign(pars, overs, confidence, total, from) {
+  const parNine = pars.slice(from, from + NINE)
+  const nine = overs.slice(from, from + NINE)
+  if (!Number.isFinite(total) || parNine.some((p) => !Number.isFinite(p))) return
+  if (nine.some((v) => v === null)) return
+
+  const diff = sum(parNine) + sum(nine) - total
+  if (diff <= 0 || diff % 2 !== 0) return
+
+  const value = diff / 2
+  if (value < 1 || value > 4) return
+
+  const candidates = nine
+    .map((v, i) => (v === value ? i : -1))
+    .filter((i) => i >= 0)
+  if (candidates.length === 0) return
+
+  const pick = candidates.reduce((lowest, i) =>
+    (confidence?.[from + i] ?? 0) < (confidence?.[from + lowest] ?? 0) ? i : lowest,
+  )
+  overs[from + pick] = -value
+}
+
 /** 전반/후반 블록을 18홀 한 줄로 합친다 */
 function mergeNines(nines) {
   const pad = () => Array(NINE).fill(null)
@@ -42,10 +72,13 @@ function mergeNines(nines) {
     const f = front.rows[i]
     const b = back.rows[i]
     const overs = [...(f?.overs ?? pad()), ...(b?.overs ?? pad())]
+    const confidence = [...(f?.confidence ?? pad()), ...(b?.confidence ?? pad())]
     const nineTotals = [f?.total ?? null, b?.total ?? null]
 
     fillSingleGap(pars, overs, nineTotals[0], 0)
     fillSingleGap(pars, overs, nineTotals[1], NINE)
+    repairFlippedSign(pars, overs, confidence, nineTotals[0], 0)
+    repairFlippedSign(pars, overs, confidence, nineTotals[1], NINE)
 
     rows.push({ label: f?.label || b?.label || '', overs, nineTotals })
   }

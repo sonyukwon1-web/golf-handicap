@@ -61,6 +61,7 @@ export function groupCells(symbols) {
   return cells.map((group) => ({
     text: group.map((g) => g.text).join(''),
     center: (group[0].x0 + group[group.length - 1].x1) / 2,
+    confidence: Math.min(...group.map((g) => g.confidence ?? 0)),
   }))
 }
 
@@ -309,16 +310,20 @@ export function buildTable({ textWords, digitSymbols }) {
     const toCells = (raw) => {
       const cells = raw.filter((c) => c.center >= leftEdge) // 이름 칸에서 새어 나온 숫자 제거
       const out = Array(columns.length).fill(null)
-      const put = (i, text) => {
-        const v = Number(text)
-        if (out[i] === null && Number.isFinite(v)) out[i] = v
+      const conf = Array(columns.length).fill(0)
+      const put = (i, cell) => {
+        const v = Number(cell.text)
+        if (out[i] === null && Number.isFinite(v)) {
+          out[i] = v
+          conf[i] = cell.confidence ?? 0
+        }
       }
 
       // 칸 수가 열 수와 같으면 순서대로 놓는다.
       // 가까운 열을 찾는 방식은 칸 위치가 조금만 흔들려도 이웃끼리 뒤바뀐다.
       if (cells.length === columns.length) {
-        cells.forEach((cell, i) => put(i, cell.text))
-        return out
+        cells.forEach((cell, i) => put(i, cell))
+        return { values: out, confidence: conf }
       }
 
       for (const cell of cells) {
@@ -328,16 +333,17 @@ export function buildTable({ textWords, digitSymbols }) {
           const gap = Math.abs(c - cell.center)
           if (gap < bestGap) { bestGap = gap; best = i }
         })
-        put(best, cell.text)
+        put(best, cell)
       }
-      return out
+      return { values: out, confidence: conf }
     }
 
     const rows = []
     for (let i = parAt + 1; i < nextParAt && rows.length < MEMBERS.length; i++) {
       const row = gridRows[i]
       if (looksLikeHoleHeader(row.cells)) continue // 다음 블록의 홀 번호 행
-      rows.push({ label: labelFor(row.y, firstColumn), cells: toCells(row.cells) })
+      const { values, confidence } = toCells(row.cells)
+      rows.push({ label: labelFor(row.y, firstColumn), cells: values, confidence })
     }
 
     // 코스 이름 띠: 표 바로 위, 숫자 없이 짧게 적힌 줄 (Sky / Lake 처럼 나인마다 적는 카드용)
@@ -382,7 +388,12 @@ export function normalizeBlock(block) {
     parTotal: par.total,
     rows: block.rows.map((r) => {
       const t = take(r.cells)
-      return { label: r.label, overs: t.nine, total: t.total }
+      return {
+        label: r.label,
+        overs: t.nine,
+        total: t.total,
+        confidence: (r.confidence || []).slice(0, 9),
+      }
     }),
   }
 }
