@@ -1301,3 +1301,13 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
   opacity: 0.85;
   line-height: 1.5;
 }
+
+/* 걸리는 시간이 일정하지 않아 진행률 대신 흐르는 막대를 쓴다 */
+.ocr-progress .bar.indeterminate span {
+  width: 40%;
+  animation: slide 1.1s ease-in-out infinite;
+}
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
