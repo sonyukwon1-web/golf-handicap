@@ -3,7 +3,7 @@ import { MEMBERS } from '../lib/handicap.js'
 import { HOLES } from '../lib/holes.js'
 import { prepare } from '../lib/imagePrep.js'
 import { recognizeWords } from '../lib/ocr.js'
-import { buildTable, nameCandidates, normalizeBlock, readHeader } from '../lib/cardVision.js'
+import { buildTable, nameCandidates, normalizeBlock, readHeader, readRoster } from '../lib/cardVision.js'
 
 const totalOf = (nineTotals) =>
   nineTotals.every((v) => Number.isFinite(v)) ? nineTotals[0] + nineTotals[1] : null
@@ -11,6 +11,22 @@ const totalOf = (nineTotals) =>
 const NINE = 9
 const sum = (a) => a.reduce((x, y) => x + (Number.isFinite(y) ? y : 0), 0)
 const filled = (a) => a.filter((v) => Number.isFinite(v)).length
+
+/**
+ * 한 나인에서 딱 한 칸만 못 읽었다면 T 값으로 되돌린다.
+ * 버디를 나비 아이콘 같은 그림으로 표시하는 카드가 있어 그 칸은 글자로 읽히지 않는다.
+ */
+function fillSingleGap(pars, overs, total, from) {
+  const nine = overs.slice(from, from + NINE)
+  const parNine = pars.slice(from, from + NINE)
+  const missing = nine.map((v, i) => (v === null ? i : -1)).filter((i) => i >= 0)
+
+  if (missing.length !== 1) return
+  if (!Number.isFinite(total) || parNine.some((p) => !Number.isFinite(p))) return
+
+  const value = total - sum(parNine) - sum(nine)
+  if (value >= -4 && value <= 12) overs[from + missing[0]] = value
+}
 
 /** 전반/후반 블록을 18홀 한 줄로 합친다 */
 function mergeNines(nines) {
@@ -25,11 +41,13 @@ function mergeNines(nines) {
   for (let i = 0; i < count; i++) {
     const f = front.rows[i]
     const b = back.rows[i]
-    rows.push({
-      label: f?.label || b?.label || `${i + 1}번째 줄`,
-      overs: [...(f?.overs ?? pad()), ...(b?.overs ?? pad())],
-      nineTotals: [f?.total ?? null, b?.total ?? null],
-    })
+    const overs = [...(f?.overs ?? pad()), ...(b?.overs ?? pad())]
+    const nineTotals = [f?.total ?? null, b?.total ?? null]
+
+    fillSingleGap(pars, overs, nineTotals[0], 0)
+    fillSingleGap(pars, overs, nineTotals[1], NINE)
+
+    rows.push({ label: f?.label || b?.label || '', overs, nineTotals })
   }
   return { pars, rows }
 }
@@ -97,6 +115,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     const parsed = buildTable({ textWords: textPass.words, digitSymbols: digitPass.symbols })
     return {
       prepped, textPass, digitPass, ...parsed,
+      lineHeight: parsed.lineHeight,
       score: parsed.blocks.length * 10 + (parsed.diag.playerRows ?? 0),
       ok: parsed.blocks.length >= 2 && (parsed.diag.playerRows ?? 0) >= 3,
     }
@@ -182,6 +201,23 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       }
 
       const merged = mergeNines(nines)
+
+      // 표 안의 작은 이름은 흐려서 못 읽는 일이 잦다. 머리글·요약카드의
+      // "이름 - 총타수" 짝과 각 줄의 총타수를 맞춰 주인을 찾는다.
+      const roster = readRoster({
+        textWords: best.textPass.words,
+        digitSymbols: best.digitPass.symbols,
+        tableTop: best.tableTop,
+        lineHeight: best.lineHeight,
+      })
+      for (const row of merged.rows) {
+        if (row.label) continue
+        const total = totalOf(row.nineTotals)
+        const hit = roster.find((r) => r.total === total)
+        if (hit) row.label = hit.label
+      }
+      merged.rows.forEach((row, i) => { if (!row.label) row.label = `${i + 1}번째 줄` })
+
       if (merged.rows.length === 0) {
         setPhase('error')
         setError('PAR 행은 찾았지만 플레이어 행을 못 찾았습니다. 이름과 숫자가 함께 보이도록 캡처해 주세요.')
@@ -366,9 +402,14 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
           <p className="map-desc">
             {unresolved.length === 0 ? (
               <>모든 줄을 알아냈습니다. 아래 값을 확인하고 표에 채우세요.</>
+            ) : nameCandidates(unresolved[0].label).length === 0 ? (
+              <>
+                카드에서 <b>이름을 읽지 못했습니다</b>. 각 줄의 <b>총타수</b>를 보고 누구인지
+                골라 주세요.
+              </>
             ) : (
               <>
-                카드에 <b>{unresolved[0].label}</b> 가 여러 줄이라 앱이 구분할 수 없습니다.{' '}
+                카드에 <b>{unresolved[0].label}</b> 가 두 줄이라 앱이 구분할 수 없습니다.{' '}
                 <b>{totalOf(unresolved[0].nineTotals) ?? '?'}타</b>를 친 쪽이 누구인지만 골라 주세요.
                 나머지는 자동으로 채워집니다.
               </>
@@ -403,7 +444,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
                       <span key={n}>
                         {n === 0 ? '전반' : '후반'}{' '}
                         {c.ok === true && `✓ ${c.computed}`}
-                        {c.ok === false && `✗ 계산 ${c.computed} ≠ 카드 ${c.claimed}`}
+                        {c.ok === false && `✗ 계산 ${c.computed} ≠ 카드 ${c.claimed} (${c.computed > c.claimed ? '+' : ''}${c.computed - c.claimed}타)`}
                         {c.ok === null && '· 확인 불가'}
                       </span>
                     ))}

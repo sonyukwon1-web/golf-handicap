@@ -147,7 +147,9 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
               <b>{done > 0 ? front.strokes + back.strokes : '–'}</b>
               {done > 0 && done < HOLES && <span className="gt-warn">{HOLES - done}홀 남음</span>}
               {v?.ok === false && (
-                <span className="gt-warn error">카드의 T는 {v.claimed} — 인식 오류 가능성</span>
+                <span className="gt-warn error">
+                  카드의 T는 {v.claimed} — {Math.abs(v.computed - v.claimed)}타 차이, 인식 오류 가능성
+                </span>
               )}
             </li>
           )

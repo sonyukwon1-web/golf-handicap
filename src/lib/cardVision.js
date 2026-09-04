@@ -157,6 +157,38 @@ export function readHeader(text) {
   return { date, teeTime, course, courseFront, courseBack }
 }
 
+/**
+ * 표 위쪽(머리글 + 요약 카드)에서 "이름 - 총타수" 짝을 모은다.
+ *
+ * 카드 주인은 머리글에 실명과 총타수가 함께 나오고, 나머지는 요약 카드에
+ * 가려진 이름과 총타수가 나온다. 표 안의 작은 이름은 흐려서 못 읽는 일이 잦은데,
+ * 총타수는 T 열에서 확실히 읽히므로 이쪽으로 줄의 주인을 알아낼 수 있다.
+ */
+export function readRoster({ textWords, digitSymbols, tableTop, lineHeight }) {
+  const above = (item) => cy(item) < tableTop
+
+  const names = textWords.filter((w) => above(w) && looksLikeName(w.text))
+  if (names.length === 0) return []
+
+  const numbers = groupRows(digitSymbols.filter(above), lineHeight * 0.6)
+    .flatMap((r) => groupCells(r.items).map((c) => ({ value: Number(c.text), x: c.center, y: r.y })))
+    .filter((n) => Number.isFinite(n.value) && n.value >= 40 && n.value <= 200)
+
+  const roster = []
+  for (const name of names) {
+    let best = null
+    let bestScore = Infinity
+    for (const num of numbers) {
+      const dy = Math.abs(num.y - cy(name))
+      if (dy > lineHeight * 3.5) continue
+      const score = Math.abs(num.x - cx(name)) + dy * 0.5
+      if (score < bestScore) { bestScore = score; best = num }
+    }
+    if (best && bestScore < lineHeight * 8) roster.push({ label: name.text, total: best.value })
+  }
+  return roster
+}
+
 // ── 표 복원 ──────────────────────────────────────────────
 
 /**
@@ -271,8 +303,24 @@ export function buildTable({ textWords, digitSymbols }) {
     const columns = parRow.cells.map((c) => c.center)
     const firstColumn = columns[0] - (columns[1] - columns[0]) / 2
 
-    const toCells = (cells) => {
+    const pitch = columns.length > 1 ? median(columns.slice(1).map((c, i) => c - columns[i])) : 40
+    const leftEdge = columns[0] - pitch * 0.6
+
+    const toCells = (raw) => {
+      const cells = raw.filter((c) => c.center >= leftEdge) // 이름 칸에서 새어 나온 숫자 제거
       const out = Array(columns.length).fill(null)
+      const put = (i, text) => {
+        const v = Number(text)
+        if (out[i] === null && Number.isFinite(v)) out[i] = v
+      }
+
+      // 칸 수가 열 수와 같으면 순서대로 놓는다.
+      // 가까운 열을 찾는 방식은 칸 위치가 조금만 흔들려도 이웃끼리 뒤바뀐다.
+      if (cells.length === columns.length) {
+        cells.forEach((cell, i) => put(i, cell.text))
+        return out
+      }
+
       for (const cell of cells) {
         let best = 0
         let bestGap = Infinity
@@ -280,8 +328,7 @@ export function buildTable({ textWords, digitSymbols }) {
           const gap = Math.abs(c - cell.center)
           if (gap < bestGap) { bestGap = gap; best = i }
         })
-        const v = Number(cell.text)
-        if (out[best] === null && Number.isFinite(v)) out[best] = v
+        put(best, cell.text)
       }
       return out
     }
@@ -316,7 +363,8 @@ export function buildTable({ textWords, digitSymbols }) {
   }
 
   diag.playerRows = blocks.reduce((n, x) => n + x.rows.length, 0)
-  return { blocks, lineHeight, diag }
+  const tableTop = gridRows.length ? gridRows[Math.min(...parIndexes)].y - lineHeight * 2 : Infinity
+  return { blocks, lineHeight, tableTop, diag }
 }
 
 /** 열이 10개면 마지막이 T, 모자라면 T 를 못 읽은 것으로 본다 */
