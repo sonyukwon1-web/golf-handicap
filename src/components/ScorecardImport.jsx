@@ -3,7 +3,7 @@ import { MEMBERS } from '../lib/handicap.js'
 import { HOLES } from '../lib/holes.js'
 import { prepare } from '../lib/imagePrep.js'
 import { recognizeWords } from '../lib/ocr.js'
-import { buildTable, nameCandidates, normalizeBlock, readHeader, readRoster } from '../lib/cardVision.js'
+import { buildTable, nameCandidates, normalizeBlock, readCardRoster, readHeader } from '../lib/cardVision.js'
 
 const totalOf = (nineTotals) =>
   nineTotals.every((v) => Number.isFinite(v)) ? nineTotals[0] + nineTotals[1] : null
@@ -235,21 +235,19 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
 
       const merged = mergeNines(nines)
 
-      // 표 안의 작은 이름은 흐려서 못 읽는 일이 잦다. 머리글·요약카드의
-      // "이름 - 총타수" 짝과 각 줄의 총타수를 맞춰 주인을 찾는다.
-      const roster = readRoster({
+      // 표 안의 작은 이름은 흐려서 못 읽는 일이 잦다. 카드 구조상 순서가 정해져 있으므로
+      // 머리글의 카드 주인이 첫 줄, 요약 카드의 나머지가 그 뒤 순서대로다.
+      // 총타수로 짝지으면 같은 타수인 두 사람이 섞인다(손유권 104, 최** 104).
+      const roster = readCardRoster({
         textWords: best.textPass.words,
         digitSymbols: best.digitPass.symbols,
         tableTop: best.tableTop,
         lineHeight: best.lineHeight,
       })
-      for (const row of merged.rows) {
-        if (row.label) continue
-        const total = totalOf(row.nineTotals)
-        const hit = roster.find((r) => r.total === total)
-        if (hit) row.label = hit.label
-      }
-      merged.rows.forEach((row, i) => { if (!row.label) row.label = `${i + 1}번째 줄` })
+      merged.rows.forEach((row, i) => {
+        const byOrder = i === 0 ? roster.owner?.label : roster.others[i - 1]?.label
+        row.label = byOrder || row.label || `${i + 1}번째 줄`
+      })
 
       if (merged.rows.length === 0) {
         setPhase('error')

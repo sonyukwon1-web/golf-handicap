@@ -159,35 +159,81 @@ export function readHeader(text) {
 }
 
 /**
- * 표 위쪽(머리글 + 요약 카드)에서 "이름 - 총타수" 짝을 모은다.
+ * 표 위쪽에서 참가자 명단을 순서대로 읽는다.
  *
- * 카드 주인은 머리글에 실명과 총타수가 함께 나오고, 나머지는 요약 카드에
- * 가려진 이름과 총타수가 나온다. 표 안의 작은 이름은 흐려서 못 읽는 일이 잦은데,
- * 총타수는 T 열에서 확실히 읽히므로 이쪽으로 줄의 주인을 알아낼 수 있다.
+ * 카드 구조가 정해져 있다.
+ *   - 큰 파란 총타수 아래의 이름 = 카드를 받은 사람. 표에서 **항상 첫 줄**이다.
+ *   - 요약 카드에 나머지가 왼쪽부터 차례로 나오고, 그 순서가 표의 2·3·4번째 줄과 같다.
+ *
+ * 총타수로 짝지으면 두 사람이 같은 타수일 때 섞인다(손유권 104, 최** 104).
+ * 그래서 순서를 쓴다.
  */
-export function readRoster({ textWords, digitSymbols, tableTop, lineHeight }) {
+export function readCardRoster({ textWords, digitSymbols, tableTop, lineHeight }) {
   const above = (item) => cy(item) < tableTop
+  const rowTol = lineHeight * 0.6
 
-  const names = textWords.filter((w) => above(w) && looksLikeName(w.text))
-  if (names.length === 0) return []
+  // 골프장 이름이 조각나면 사람 이름처럼 보인다 ("레이크우드" → 리/앤/리).
+  // 명단에 쓸 이름은 가려진 형태(이**, 최**)이거나 우리 멤버 실명뿐이다.
+  const clean = (t) => t.replace(MASK, '')
+  const isMasked = (t) => /[*○ㅇ〇]/.test(t)
+  const isRosterName = (t) => isMasked(t) || MEMBERS.includes(clean(t))
 
-  const numbers = groupRows(digitSymbols.filter(above), lineHeight * 0.6)
-    .flatMap((r) => groupCells(r.items).map((c) => ({ value: Number(c.text), x: c.center, y: r.y })))
-    .filter((n) => Number.isFinite(n.value) && n.value >= 40 && n.value <= 200)
+  const textRows = groupRows(textWords.filter(above), rowTol)
+  const nameRows = textRows
+    .map((r) => ({ y: r.y, names: r.items.filter((w) => looksLikeName(w.text) && isRosterName(w.text)) }))
+    .filter((r) => r.names.length > 0)
 
-  const roster = []
-  for (const name of names) {
+  if (nameRows.length === 0) return { owner: null, others: [] }
+
+  const numberRows = groupRows(digitSymbols.filter(above), rowTol).map((r) => ({
+    y: r.y,
+    cells: groupCells(r.items)
+      .map((c) => ({ value: Number(c.text), x: c.center }))
+      .filter((c) => Number.isFinite(c.value) && c.value >= 40 && c.value <= 200),
+  }))
+
+  const numbersNear = (y, maxGap) => {
     let best = null
-    let bestScore = Infinity
-    for (const num of numbers) {
-      const dy = Math.abs(num.y - cy(name))
-      if (dy > lineHeight * 3.5) continue
-      const score = Math.abs(num.x - cx(name)) + dy * 0.5
-      if (score < bestScore) { bestScore = score; best = num }
+    let bestGap = Infinity
+    for (const r of numberRows) {
+      if (r.cells.length === 0) continue
+      const gap = Math.abs(r.y - y)
+      if (gap < bestGap && gap <= maxGap) { bestGap = gap; best = r }
     }
-    if (best && bestScore < lineHeight * 8) roster.push({ label: name.text, total: best.value })
+    return best
   }
-  return roster
+
+  // 요약 카드: 가려진 이름이 둘 이상 늘어서고, 바로 옆에 같은 개수의 총타수가 있는 줄
+  let summary = null
+  let summaryValues = []
+  for (const row of nameRows) {
+    if (row.names.length < 2) continue
+    const near = numbersNear(row.y, lineHeight * 4)
+    if (!near || near.cells.length !== row.names.length) continue
+    summary = row
+    summaryValues = [...near.cells].sort((a, b) => a.x - b.x)
+  }
+
+  // 카드 주인은 실명으로 나온다. 요약 줄이 아니고 그보다 위에 있는 줄.
+  const ownerRow = nameRows
+    .filter((r) => r !== summary && (!summary || r.y < summary.y - rowTol))
+    .filter((r) => r.names.some((w) => MEMBERS.includes(clean(w.text))))
+    .pop()
+
+  let owner = null
+  if (ownerRow) {
+    const name = ownerRow.names.find((w) => MEMBERS.includes(clean(w.text)))
+    const near = numbersNear(ownerRow.y, lineHeight * 4)
+    owner = { label: name.text, total: near?.cells[0]?.value ?? null }
+  }
+
+  const others = summary
+    ? [...summary.names]
+        .sort((a, b) => cx(a) - cx(b))
+        .map((n, i) => ({ label: n.text, total: summaryValues[i]?.value ?? null }))
+    : []
+
+  return { owner, others }
 }
 
 // ── 표 복원 ──────────────────────────────────────────────

@@ -18,9 +18,15 @@ const TABS = [
   { id: 'input', label: '입력' },
 ]
 
+/** 새로고침해도 보던 탭에 그대로 머물도록 주소(#입력) 에 담아 둔다 */
+const tabFromHash = () => {
+  const id = typeof location !== 'undefined' ? location.hash.replace('#', '') : ''
+  return TABS.some((t) => t.id === id) ? id : 'home'
+}
+
 export default function App() {
   const [data, setData] = useState(load)
-  const [tab, setTab] = useState('home')
+  const [tab, setTab] = useState(tabFromHash)
   const [message, setMessage] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)  // 방금 저장한 라운드
   const [rouletteId, setRouletteId] = useState(null)
@@ -28,6 +34,19 @@ export default function App() {
   const fileRef = useRef(null)
 
   useEffect(() => { save(data) }, [data])
+
+  // 탭을 바꾸면 주소에 남기고, 뒤로 가기로 돌아오면 그 탭을 연다
+  useEffect(() => {
+    if (location.hash.replace('#', '') !== tab) {
+      history.replaceState(null, '', tab === 'home' ? location.pathname + location.search : `#${tab}`)
+    }
+  }, [tab])
+
+  useEffect(() => {
+    const onHash = () => setTab(tabFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   useEffect(() => {
     if (!message) return
