@@ -178,6 +178,17 @@ function trimLeadingOutliers(cells) {
   return cells
 }
 
+/**
+ * HOLE 머리 행인지. 1~9 또는 10~18 이 차례로 늘어선 줄은 홀 번호 행뿐이다.
+ * "PAR" 글자보다 훨씬 뚜렷한 신호라, 블록의 기준점으로 이쪽을 먼저 쓴다.
+ */
+function looksLikeHoleHeader(cells) {
+  if (cells.length < 9) return false
+  const nine = cells.slice(0, 9).map((c) => Number(c.text))
+  if (nine.some((v) => !Number.isFinite(v))) return false
+  return nine.every((v, i) => v === i + 1) || nine.every((v, i) => v === i + 10)
+}
+
 /** 9홀 값이 모두 3~6 이면 PAR 행으로 본다 (PAR 글자를 못 읽어도 찾아내기 위해) */
 function looksLikeParRow(cells) {
   if (cells.length < 9) return false
@@ -210,18 +221,31 @@ export function buildTable({ textWords, digitSymbols }) {
   const parLabelAt = (y) =>
     textRows.some((r) => Math.abs(r.y - y) <= rowTol && r.items.some((w) => PAR_LABEL.test(w.text)))
 
-  // PAR 행은 글자로 찾는 게 가장 정확하다.
-  // 값만 보고 판정하면 플레이어 행이 우연히 전부 3~6 일 때 PAR 로 오인한다.
-  // 그래서 PAR 글자를 하나도 못 읽었을 때만 값으로 추정한다.
+  const holeHeaders = gridRows.map((r, i) => ({ r, i })).filter(({ r }) => looksLikeHoleHeader(r.cells)).map(({ i }) => i)
+
+  // 기준선 후보 세 가지. 전반·후반 두 블록을 모두 찾아내는 쪽을 고른다.
+  //
+  //  1) HOLE 행(1~9) 바로 다음 줄 — 가장 뚜렷하다
+  //  2) PAR 글자가 붙은 줄 — 둘 중 하나만 읽히는 일이 잦아 단독으로는 위험하다
+  //  3) 값이 전부 3~6 인 줄 — 플레이어 행이 우연히 그럴 수 있어 최후 수단이다
+  //
+  // 예전에는 (2)만 있으면 무조건 그것만 썼는데, PAR 글자를 하나만 읽으면
+  // 나머지 나인을 통째로 잃었다.
+  const afterHole = holeHeaders.filter((i) => i + 1 < gridRows.length).map((i) => i + 1)
   const labelled = gridRows.map((r, i) => ({ r, i })).filter(({ r }) => parLabelAt(r.y)).map(({ i }) => i)
   const guessed = gridRows.map((r, i) => ({ r, i })).filter(({ r }) => looksLikeParRow(r.cells)).map(({ i }) => i)
-  const parIndexes = labelled.length > 0 ? labelled : guessed
+
+  const candidates = [afterHole, labelled, guessed]
+  const parIndexes =
+    candidates.find((c) => c.length >= 2) || candidates.find((c) => c.length >= 1) || []
 
   const diag = {
     textWords: textWords.length,
     digitSymbols: digitSymbols.length,
     textRows: textRows.length,
     gridRows: gridRows.length,
+    holeHeaders: holeHeaders.length,
+    parByLabel: labelled.length,
     parRows: parIndexes.length,
     nameRows: textRows.filter((r) => r.items.some((w) => looksLikeName(w.text))).length,
     lineHeight: Math.round(lineHeight),
@@ -265,6 +289,7 @@ export function buildTable({ textWords, digitSymbols }) {
     const rows = []
     for (let i = parAt + 1; i < nextParAt && rows.length < MEMBERS.length; i++) {
       const row = gridRows[i]
+      if (looksLikeHoleHeader(row.cells)) continue // 다음 블록의 홀 번호 행
       rows.push({ label: labelFor(row.y, firstColumn), cells: toCells(row.cells) })
     }
 
