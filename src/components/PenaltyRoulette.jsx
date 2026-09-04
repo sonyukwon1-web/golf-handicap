@@ -25,25 +25,35 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
   const [result, setResult] = useState(null)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  // 공동 꼴찌면 벌칙 전에 "꼴찌 결정전"부터 돌린다
+  const [finalLoser, setFinalLoser] = useState(losers.length === 1 ? losers[0] : null)
   const timer = useRef(null)
 
-  const seg = penalties.length ? 360 / penalties.length : 360
+  const stage = finalLoser ? 'penalty' : 'loser'
+  const slots = stage === 'loser' ? losers : penalties
+  const seg = slots.length ? 360 / slots.length : 360
 
   const spin = () => {
-    if (spinning || penalties.length === 0) return
+    if (spinning || slots.length === 0) return
     setResult(null)
     setSpinning(true)
 
-    const index = Math.floor(Math.random() * penalties.length)
+    const index = Math.floor(Math.random() * slots.length)
     // 뽑힌 칸의 한가운데가 위쪽 바늘에 오도록 회전량을 정한다
-    const target = 360 * TURNS - (index + 0.5) * seg
-    setRotation(target)
+    setRotation(360 * TURNS - (index + 0.5) * seg)
 
     clearTimeout(timer.current)
     timer.current = setTimeout(() => {
       setSpinning(false)
-      setResult(penalties[index])
+      setResult(slots[index])
     }, SPIN_MS)
+  }
+
+  /** 꼴찌 결정전이 끝나면 같은 원판을 벌칙용으로 다시 쓴다 */
+  const confirmLoser = () => {
+    setFinalLoser(result)
+    setResult(null)
+    setRotation(0)
   }
 
   const addPenalty = () => {
@@ -58,12 +68,18 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal roulette" role="dialog" aria-modal="true" aria-labelledby="roulette-title">
-        <h2 id="roulette-title" className="modal-title">꼴찌 벌칙 룰렛</h2>
+        <h2 id="roulette-title" className="modal-title">
+          {stage === 'loser' ? '꼴찌 결정전' : '꼴찌 벌칙 룰렛'}
+        </h2>
         <p className="modal-desc">
-          오늘의 꼴찌는 <b>{losers.join(', ')}</b>. 벌칙을 뽑아 봅시다.
+          {stage === 'loser' ? (
+            <>넷 스코어 공동 꼴찌 <b>{losers.join(' · ')}</b>. 한 명을 가려 봅시다.</>
+          ) : (
+            <>오늘의 꼴찌는 <b>{finalLoser}</b>. 벌칙을 뽑아 봅시다.</>
+          )}
         </p>
 
-        {penalties.length === 0 ? (
+        {stage === 'penalty' && penalties.length === 0 ? (
           <div className="notice error">벌칙이 하나도 없습니다. 아래에서 추가해 주세요.</div>
         ) : (
           <div className="wheel-wrap">
@@ -76,9 +92,9 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
                 transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(0.13, 0.78, 0.16, 1)` : 'none',
               }}
               role="img"
-              aria-label={`벌칙 ${penalties.length}칸 룰렛`}
+              aria-label={`${stage === 'loser' ? '꼴찌 결정' : '벌칙'} ${slots.length}칸 룰렛`}
             >
-              {penalties.map((p, i) => {
+              {slots.map((p, i) => {
                 const center = (i + 0.5) * seg
                 // 원판이 통째로 돌아가므로 화면에서의 실제 각도는 회전량까지 더해야 한다.
                 // 아래쪽 반원에 놓이는 글자는 그대로 두면 거꾸로 보이니 180도 돌려 세운다.
@@ -107,7 +123,7 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
         <div aria-live="polite" className="roulette-result">
           {result ? (
             <>
-              <span className="r-label">오늘의 벌칙</span>
+              <span className="r-label">{stage === 'loser' ? '최종 꼴찌' : '오늘의 벌칙'}</span>
               <strong>{result}</strong>
             </>
           ) : (
@@ -116,21 +132,29 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
         </div>
 
         <div className="modal-foot">
-          <button type="button" className="btn" onClick={() => setEditing((v) => !v)}>
-            벌칙 편집
-          </button>
-          {result ? (
-            <button type="button" className="btn primary" onClick={() => onDecided(result)}>
-              확정
+          {stage === 'penalty' && (
+            <button type="button" className="btn" onClick={() => setEditing((v) => !v)}>
+              벌칙 편집
             </button>
+          )}
+          {result ? (
+            stage === 'loser' ? (
+              <button type="button" className="btn primary" onClick={confirmLoser}>
+                벌칙 뽑으러 가기
+              </button>
+            ) : (
+              <button type="button" className="btn primary" onClick={() => onDecided(result, finalLoser)}>
+                확정
+              </button>
+            )
           ) : (
-            <button type="button" className="btn primary" onClick={spin} disabled={spinning || penalties.length === 0}>
+            <button type="button" className="btn primary" onClick={spin} disabled={spinning || slots.length === 0}>
               {spinning ? '돌리는 중…' : '돌리기'}
             </button>
           )}
         </div>
 
-        {editing && (
+        {editing && stage === 'penalty' && (
           <div className="penalty-edit">
             <ul>
               {penalties.map((p) => (

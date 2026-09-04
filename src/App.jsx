@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import HallOfFame from './components/HallOfFame.jsx'
+import HoleRoundForm from './components/HoleRoundForm.jsx'
 import PenaltyRoulette from './components/PenaltyRoulette.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
@@ -8,7 +9,6 @@ import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { computeStats } from './lib/handicap.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
 const TABS = [
@@ -24,6 +24,7 @@ export default function App() {
   const [message, setMessage] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)  // 방금 저장한 라운드
   const [rouletteId, setRouletteId] = useState(null)
+  const [inputMode, setInputMode] = useState('holes')
   const fileRef = useRef(null)
 
   useEffect(() => { save(data) }, [data])
@@ -36,7 +37,6 @@ export default function App() {
 
   const rounds = data.rounds
   const roundCount = rounds.length
-  const { stats } = computeStats(rounds)
 
   const addRounds = (list) => {
     setData((d) => ({ ...d, rounds: [...d.rounds, ...list] }))
@@ -165,7 +165,33 @@ export default function App() {
           </section>
         )}
 
-        {tab === 'input' && <RoundForm onSave={addRounds} stats={stats} />}
+        {tab === 'input' && (
+          <section className="section">
+            <div className="section-head">
+              <h2>라운드 기록 입력</h2>
+              <span className="hint">빠진 사람은 비워두세요</span>
+            </div>
+
+            <div className="mode-switch" role="tablist" aria-label="입력 방식">
+              <button
+                type="button" role="tab" aria-selected={inputMode === 'holes'}
+                onClick={() => setInputMode('holes')}
+              >
+                홀별 기록
+              </button>
+              <button
+                type="button" role="tab" aria-selected={inputMode === 'total'}
+                onClick={() => setInputMode('total')}
+              >
+                총 타수만
+              </button>
+            </div>
+
+            {inputMode === 'holes'
+              ? <HoleRoundForm onSave={addRounds} />
+              : <RoundForm onSave={addRounds} />}
+          </section>
+        )}
 
         {tab !== 'input' && (
           <p className="foot-note">
@@ -192,10 +218,11 @@ export default function App() {
           penalties={data.penalties}
           onChangePenalties={setPenalties}
           onClose={() => setRouletteId(null)}
-          onDecided={(text) => {
-            assignPenalty(rouletteRound.id, text, rouletteRound.losers)
+          onDecided={(text, finalLoser) => {
+            const targets = finalLoser ? [finalLoser] : rouletteRound.losers
+            assignPenalty(rouletteRound.id, text, targets)
             setRouletteId(null)
-            setMessage({ kind: 'info', text: `${rouletteRound.losers.join(', ')} 벌칙: ${text}` })
+            setMessage({ kind: 'info', text: `${targets.join(', ')} 벌칙: ${text}` })
           }}
         />
       )}

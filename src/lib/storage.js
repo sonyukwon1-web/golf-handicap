@@ -1,15 +1,31 @@
 import { MEMBERS, isScore } from './handicap.js'
+import { HOLES, completeTotal } from './holes.js'
 
 const KEY = 'golf-handicap:v1'
 
 export const DEFAULT_PENALTIES = ['밥 사기', '커피 사기', '다음 라운드 캐디피 내기']
 
 export const emptyData = () => ({
-  version: 2,
+  version: 3,
   members: MEMBERS,
   rounds: [],
   penalties: [...DEFAULT_PENALTIES],
 })
+
+/** 길이 18의 숫자 배열로 맞춘다. 값이 없거나 범위를 벗어나면 null. */
+function holeArray(raw, { min, max }) {
+  if (!Array.isArray(raw)) return null
+  const out = Array(HOLES).fill(null)
+  let any = false
+  for (let i = 0; i < HOLES; i++) {
+    const v = Number(raw[i])
+    if (raw[i] === null || raw[i] === '' || !Number.isFinite(v)) continue
+    if (v < min || v > max) continue
+    out[i] = Math.round(v)
+    any = true
+  }
+  return any ? out : null
+}
 
 export function newId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
@@ -35,10 +51,39 @@ export function normalize(raw) {
           ? { text: r.penalty.text, members: r.penalty.members.filter((m) => MEMBERS.includes(m)) }
           : null
 
+      // 홀별 기록은 나중에 생긴 형식이라 없을 수 있다 (총 타수만 적은 옛 라운드).
+      const pars = holeArray(r.pars, { min: 3, max: 6 })
+      let holes = null
+      if (pars && r.holes && typeof r.holes === 'object') {
+        const collected = {}
+        let any = false
+        for (const m of MEMBERS) {
+          const arr = holeArray(r.holes[m], { min: -4, max: 12 })
+          collected[m] = arr
+          if (arr) any = true
+        }
+        holes = any ? collected : null
+      }
+
+      // 홀별로 18홀이 다 있으면 총 타수는 파 합계 + 오버 합계로 다시 계산한다
+      if (pars && holes) {
+        for (const m of MEMBERS) {
+          const total = holes[m] ? completeTotal(pars, holes[m]) : null
+          if (total !== null) scores[m] = total
+        }
+      }
+
+      const str = (v) => (typeof v === 'string' ? v.trim() : '')
+
       return {
         id: typeof r.id === 'string' && r.id ? r.id : newId(),
         date: r.date,
-        course: typeof r.course === 'string' ? r.course : '',
+        course: str(r.course),
+        teeTime: /^\d{1,2}:\d{2}$/.test(str(r.teeTime)) ? str(r.teeTime) : '',
+        courseFront: str(r.courseFront),
+        courseBack: str(r.courseBack),
+        pars,
+        holes,
         scores,
         createdAt: Number.isFinite(Number(r.createdAt)) ? Number(r.createdAt) : i,
         penalty,
@@ -50,7 +95,7 @@ export function normalize(raw) {
     ? [...new Set(raw.penalties.filter((p) => typeof p === 'string' && p.trim()).map((p) => p.trim()))]
     : [...DEFAULT_PENALTIES]
 
-  return { version: 2, members: MEMBERS, rounds: clean, penalties }
+  return { version: 3, members: MEMBERS, rounds: clean, penalties }
 }
 
 export function load() {

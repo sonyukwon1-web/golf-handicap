@@ -1,6 +1,62 @@
 import { useState } from 'react'
 import { MEMBERS, computeRoundDetails, fmtDate } from '../lib/handicap.js'
+import { FRONT, HOLES, grossOf, hasHoleData, parTotal } from '../lib/holes.js'
 import RoundFields from './RoundFields.jsx'
+
+const NINES = [
+  { key: 'front', label: '전반', from: 0, to: FRONT },
+  { key: 'back', label: '후반', from: FRONT, to: HOLES },
+]
+
+/** 저장된 홀별 기록을 읽기 전용 표로 보여준다 */
+function HoleTable({ round }) {
+  const players = MEMBERS.filter((m) => (round.holes?.[m] || []).some((v) => Number.isFinite(v)))
+
+  return (
+    <details className="round-holes">
+      <summary>홀별 기록 보기</summary>
+      {NINES.map(({ key, label, from, to }) => (
+        <div className="table-scroll" key={key}>
+          <table className="score-grid readonly">
+            <caption>
+              {label} 9홀
+              {key === 'front' && round.courseFront ? ` · ${round.courseFront}` : ''}
+              {key === 'back' && round.courseBack ? ` · ${round.courseBack}` : ''}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col" className="rowhead">HOLE</th>
+                {Array.from({ length: to - from }, (_, k) => <th scope="col" key={k}>{from + k + 1}</th>)}
+                <th scope="col" className="tcol">T</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="par-row">
+                <th scope="row" className="rowhead">PAR</th>
+                {Array.from({ length: to - from }, (_, k) => <td key={k}>{round.pars[from + k]}</td>)}
+                <td className="tcol">{parTotal(round.pars, from, to)}</td>
+              </tr>
+              {players.map((m) => (
+                <tr key={m}>
+                  <th scope="row" className="rowhead">{m}</th>
+                  {Array.from({ length: to - from }, (_, k) => {
+                    const v = round.holes[m][from + k]
+                    return (
+                      <td key={k} className={v < 0 ? 'under' : v >= 3 ? 'blowup' : ''}>
+                        {Number.isFinite(v) ? v : '·'}
+                      </td>
+                    )
+                  })}
+                  <td className="tcol">{grossOf(round.pars, round.holes[m], from, to).strokes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </details>
+  )
+}
 
 function toDraft(round) {
   return {
@@ -107,7 +163,10 @@ export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
               <span>
                 <span className="round-date">{fmtDate(r.date)}</span>
                 <span className="round-course" style={{ display: 'block' }}>
-                  {r.course || '골프장 미입력'} · {r.entries.length}명
+                  {r.course || '골프장 미입력'}
+                  {r.courseFront && ` · ${r.courseFront}${r.courseBack ? `-${r.courseBack}` : ''}`}
+                  {r.teeTime && ` · ${r.teeTime}`}
+                  {' · '}{r.entries.length}명
                 </span>
               </span>
               <span className="round-winner">
@@ -133,6 +192,7 @@ export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
                 ) : (
                   <>
                     <RoundDetail round={r} />
+                    {hasHoleData(r) && <HoleTable round={r} />}
                     {r.penalty && (
                       <p className="penalty-tag">
                         🎯 <b>{r.penalty.members.join(', ')}</b> — {r.penalty.text}

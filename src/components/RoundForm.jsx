@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
 import { newId } from '../lib/storage.js'
 import RoundFields from './RoundFields.jsx'
-import ScorecardImport from './ScorecardImport.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -32,9 +31,7 @@ function toRound(d, i) {
   return { id: newId(), date: d.date, course: d.course.trim(), scores, createdAt: Date.now() + i }
 }
 
-const isBlank = (d) => !d.course.trim() && MEMBERS.every((m) => d.scores[m] === '')
-
-export default function RoundForm({ onSave, stats }) {
+export default function RoundForm({ onSave }) {
   const [drafts, setDrafts] = useState([blankDraft()])
   const [error, setError] = useState('')
 
@@ -45,21 +42,6 @@ export default function RoundForm({ onSave, stats }) {
 
   const addRow = () => {
     setDrafts((ds) => [...ds, blankDraft(ds[ds.length - 1]?.date || today())])
-  }
-
-  /** OCR 결과를 비어 있는 칸에 채우고, 빈 칸이 없으면 새 칸을 만든다 */
-  const applyScorecard = (draft) => {
-    setError('')
-    setDrafts((ds) => {
-      const filled = {
-        date: draft.date || today(),
-        course: draft.course || '',
-        scores: { ...draft.scores },
-      }
-      const idx = ds.findIndex(isBlank)
-      if (idx === -1) return [...ds, { ...filled, key: newId() }]
-      return ds.map((d, i) => (i === idx ? { ...filled, key: d.key } : d))
-    })
   }
 
   const removeRow = (key) => setDrafts((ds) => (ds.length === 1 ? ds : ds.filter((d) => d.key !== key)))
@@ -89,13 +71,6 @@ export default function RoundForm({ onSave, stats }) {
 
   return (
     <form onSubmit={submit} noValidate>
-      <div className="section-head">
-        <h2>라운드 기록 입력</h2>
-        <span className="hint">불참한 멤버는 비워두세요</span>
-      </div>
-
-      <ScorecardImport stats={stats} onDraft={applyScorecard} />
-
       {error && <div className="notice error" role="alert">{error}</div>}
 
       {drafts.map((d, i) => (
