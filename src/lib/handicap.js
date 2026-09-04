@@ -82,7 +82,9 @@ export function computeRoundDetails(rounds) {
     const entries = MEMBERS.filter((m) => isScore(round.scores?.[m]))
       .map((m) => {
         const gross = round.scores[m]
-        const handicap = stats[m].handicap ?? 0
+        // 기록이 한 번뿐이면 "평균"이 그 날 타수 그 자체라, 핸디가 타수 차이를
+        // 그대로 상쇄해 전원 동타가 된다. 그래서 2라운드째부터 핸디를 적용한다.
+        const handicap = stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
         return { member: m, gross, handicap, net: gross - handicap }
       })
       .sort((a, b) => a.net - b.net || a.gross - b.gross)

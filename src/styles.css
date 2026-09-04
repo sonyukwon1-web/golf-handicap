@@ -711,3 +711,304 @@ table.data tbody tr:last-child th { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ── 도발 멘트 ────────────────────────────────────────── */
+.trash-talk {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--green-soft), var(--surface));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 12px 12px 12px 14px;
+  margin-bottom: 20px;
+}
+.trash-talk .tt-mic { font-size: 16px; line-height: 1.4; flex-shrink: 0; }
+.trash-talk p {
+  margin: 0;
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--green-ink);
+}
+.tt-more {
+  flex-shrink: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+.tt-more:hover { background: var(--surface-2); color: var(--green); }
+
+/* ── 배지 ─────────────────────────────────────────────── */
+.badge-row {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  line-height: 1.3;
+}
+.chip.hot { background: #fdece2; color: #a33c11; border-color: #f6d3c1; }
+.chip.doom { background: #ecebef; color: #4b4a58; border-color: #d9d8e0; }
+.chip.good { background: var(--green-soft); color: var(--green-ink); border-color: var(--line-strong); }
+.chip.calm { background: #e3eefb; color: #1b4f8c; border-color: #c9dcf5; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .chip.hot { background: #3a2117; color: #f3b393; border-color: #542f20; }
+  :root:not([data-theme='light']) .chip.doom { background: #26252c; color: #b8b6c4; border-color: #38363f; }
+  :root:not([data-theme='light']) .chip.calm { background: #16283d; color: #9ec7f2; border-color: #22405f; }
+}
+:root[data-theme='dark'] .chip.hot { background: #3a2117; color: #f3b393; border-color: #542f20; }
+:root[data-theme='dark'] .chip.doom { background: #26252c; color: #b8b6c4; border-color: #38363f; }
+:root[data-theme='dark'] .chip.calm { background: #16283d; color: #9ec7f2; border-color: #22405f; }
+
+/* ── 명예의 전당 / 랭킹 ───────────────────────────────── */
+.fame-stack { display: flex; flex-direction: column; gap: 12px; }
+.fame-stack .section-head { margin-bottom: 0; }
+
+.fame-card { padding: 14px; }
+.fame-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.fame-head h3 { margin: 0; font-size: 14.5px; font-weight: 700; }
+.fame-head .hint { font-size: 11.5px; color: var(--ink-3); }
+
+.fame-list, .season-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fame-list li, .season-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+.fame-medal { width: 18px; flex-shrink: 0; font-size: 14px; }
+.fame-name { font-weight: 700; width: 58px; flex-shrink: 0; }
+.fame-list b, .season-list b {
+  margin-left: auto;
+  font-size: 17px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.fame-list b small, .season-list b small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-left: 2px;
+}
+
+.fame-bar {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.fame-bar i { display: block; height: 100%; border-radius: 999px; background: var(--green); }
+.fame-bad .fame-bar i { background: #9b8fa5; }
+
+table.data td.best { color: var(--green); font-weight: 700; }
+table.data td.worst { color: var(--ink-3); }
+
+.season-played {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.season-list b { margin-left: 10px; }
+.season-list li[data-lead='true'] .fame-name { color: var(--green); }
+
+.champion-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.champion-list li { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.champ-year { font-weight: 700; font-variant-numeric: tabular-nums; width: 42px; flex-shrink: 0; }
+.champ-name { font-weight: 600; }
+.champ-pts { margin-left: auto; font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ── 라이벌 매치 ──────────────────────────────────────── */
+.rival-card { padding: 14px; }
+
+.rival-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rival-pick label { flex: 1; min-width: 0; }
+.rival-pick select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rival-pick .vs { font-size: 12px; font-weight: 800; color: var(--ink-3); letter-spacing: 0.04em; }
+
+.rival-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.rs-side {
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink-3);
+}
+.rs-side[data-lead='true'] { color: var(--green); }
+.rs-side small { font-size: 12px; font-weight: 600; margin-left: 2px; }
+.rs-mid { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+
+.rival-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-3);
+  gap: 2px;
+  margin-bottom: 12px;
+}
+.rival-bar i { display: block; height: 100%; }
+.rival-bar .ra { background: var(--series-1); }
+.rival-bar .rb { background: var(--series-2); }
+
+.rival-gap { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); }
+.rival-gap b { color: var(--ink); }
+.rival-empty { margin: 0; font-size: 13px; color: var(--ink-3); text-align: center; padding: 16px 0; }
+
+table.data td small { color: var(--ink-3); font-size: 11px; }
+
+/* ── 우승 발표 ────────────────────────────────────────── */
+.modal-backdrop.celebrate { align-items: center; }
+.confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.winner-modal { text-align: center; position: relative; z-index: 55; }
+.winner-eyebrow { margin: 0 0 10px; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.winner-trophy { margin: 0; font-size: 52px; line-height: 1; }
+.winner-name {
+  margin: 8px 0 2px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--green);
+}
+.winner-sub { margin: 0 0 16px; font-size: 13.5px; color: var(--ink-2); font-weight: 600; }
+
+.winner-board {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+.winner-board li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.winner-board li[data-first='true'] { background: var(--green-soft); }
+.wb-name { font-weight: 700; }
+.wb-gross { margin-left: auto; color: var(--ink-3); }
+.wb-net { font-weight: 750; font-size: 16px; min-width: 34px; text-align: right; }
+
+/* ── 벌칙 룰렛 ────────────────────────────────────────── */
+.roulette { text-align: center; }
+.roulette .modal-desc { text-align: left; }
+
+.wheel-wrap { position: relative; width: min(240px, 68vw); margin: 4px auto 14px; }
+.wheel { display: block; width: 100%; height: auto; }
+.wheel-pin {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 16px solid var(--ink);
+  z-index: 2;
+}
+
+.roulette-result { min-height: 52px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.roulette-result .r-label { font-size: 11.5px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.03em; }
+.roulette-result strong { font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: -0.01em; }
+.roulette-result .r-idle { font-size: 13px; color: var(--ink-3); }
+
+.penalty-edit { margin-top: 14px; text-align: left; border-top: 1px solid var(--line); padding-top: 12px; }
+.penalty-edit ul { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.penalty-edit li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 7px 8px 7px 11px;
+}
+.penalty-edit li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.penalty-add { display: flex; gap: 8px; }
+.penalty-add input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+}
+
+.penalty-tag {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.penalty-tag b { color: var(--ink); }

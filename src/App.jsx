@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
+import HallOfFame from './components/HallOfFame.jsx'
+import PenaltyRoulette from './components/PenaltyRoulette.jsx'
+import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
 import RoundList from './components/RoundList.jsx'
+import SeasonRanking from './components/SeasonRanking.jsx'
+import WinnerCelebration from './components/WinnerCelebration.jsx'
+import { roundOutcomes } from './lib/awards.js'
 import { computeStats } from './lib/handicap.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
 const TABS = [
   { id: 'home', label: '홈' },
   { id: 'rounds', label: '라운드' },
+  { id: 'fame', label: '랭킹' },
   { id: 'input', label: '입력' },
 ]
 
@@ -15,6 +22,8 @@ export default function App() {
   const [data, setData] = useState(load)
   const [tab, setTab] = useState('home')
   const [message, setMessage] = useState(null)
+  const [celebrateId, setCelebrateId] = useState(null)  // 방금 저장한 라운드
+  const [rouletteId, setRouletteId] = useState(null)
   const fileRef = useRef(null)
 
   useEffect(() => { save(data) }, [data])
@@ -32,6 +41,10 @@ export default function App() {
   const addRounds = (list) => {
     setData((d) => ({ ...d, rounds: [...d.rounds, ...list] }))
     setMessage({ kind: 'info', text: `${list.length}개 라운드가 저장되었습니다.` })
+
+    // 오늘 친 결과를 넣었을 때만 발표한다.
+    // 과거 스코어카드를 여러 장 몰아 넣는 중이라면 축포는 방해만 된다.
+    if (list.length === 1) setCelebrateId(list[0].id)
   }
 
   const updateRound = (next) =>
@@ -39,6 +52,18 @@ export default function App() {
 
   const deleteRound = (id) =>
     setData((d) => ({ ...d, rounds: d.rounds.filter((r) => r.id !== id) }))
+
+  const setPenalties = (penalties) => setData((d) => ({ ...d, penalties }))
+
+  const assignPenalty = (roundId, text, members) =>
+    setData((d) => ({
+      ...d,
+      rounds: d.rounds.map((r) => (r.id === roundId ? { ...r, penalty: { text, members } } : r)),
+    }))
+
+  const outcomes = roundOutcomes(rounds)
+  const celebrating = celebrateId ? outcomes.find((o) => o.id === celebrateId) : null
+  const rouletteRound = rouletteId ? outcomes.find((o) => o.id === rouletteId) : null
 
   const onExport = () => {
     if (roundCount === 0) {
@@ -71,7 +96,7 @@ export default function App() {
         <div className="shell">
           <div className="topbar-row">
             <div className="brand">
-              <h1>⛳ 골프 모임 핸디캡</h1>
+              <h1>⛳ 낙원 골프</h1>
               <span>{roundCount}라운드</span>
             </div>
             <div className="topbar-actions">
@@ -128,6 +153,18 @@ export default function App() {
           </section>
         )}
 
+        {tab === 'fame' && (
+          <section className="section fame-stack">
+            <div className="section-head">
+              <h2>명예의 전당 &amp; 흑역사관</h2>
+              <span className="hint">{roundCount}라운드 누적</span>
+            </div>
+            <HallOfFame rounds={rounds} />
+            <SeasonRanking rounds={rounds} />
+            <RivalMatch rounds={rounds} />
+          </section>
+        )}
+
         {tab === 'input' && <RoundForm onSave={addRounds} stats={stats} />}
 
         {tab !== 'input' && (
@@ -137,6 +174,31 @@ export default function App() {
           </p>
         )}
       </main>
+
+      {celebrating && (
+        <WinnerCelebration
+          round={celebrating}
+          onClose={() => setCelebrateId(null)}
+          onPenalty={() => {
+            setRouletteId(celebrating.id)
+            setCelebrateId(null)
+          }}
+        />
+      )}
+
+      {rouletteRound && (
+        <PenaltyRoulette
+          losers={rouletteRound.losers}
+          penalties={data.penalties}
+          onChangePenalties={setPenalties}
+          onClose={() => setRouletteId(null)}
+          onDecided={(text) => {
+            assignPenalty(rouletteRound.id, text, rouletteRound.losers)
+            setRouletteId(null)
+            setMessage({ kind: 'info', text: `${rouletteRound.losers.join(', ')} 벌칙: ${text}` })
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -1,8 +1,10 @@
 import { MEMBERS, computeStats, fmtAvg } from '../lib/handicap.js'
+import { badges as computeBadges } from '../lib/awards.js'
 import TrendChart from './TrendChart.jsx'
 import RoundList from './RoundList.jsx'
+import TrashTalk from './TrashTalk.jsx'
 
-function MemberCard({ s, slot }) {
+function MemberCard({ s, slot, badges }) {
   return (
     <article className="member-card" style={{ '--dot': `var(--series-${slot})` }}>
       <h3 className="member-name">
@@ -22,6 +24,17 @@ function MemberCard({ s, slot }) {
         )}
       </p>
 
+      {badges.length > 0 && (
+        <ul className="badge-row">
+          {badges.map((b) => (
+            <li key={b.id} className={`chip ${b.tone}`} title={b.detail || b.label}>
+              <span aria-hidden="true">{b.icon}</span>
+              {b.label}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <dl className="member-sub">
         <div>
           <dt>최근 {s.recentCount || 5}경기 평균</dt>
@@ -38,9 +51,12 @@ function MemberCard({ s, slot }) {
 
 export default function Dashboard({ rounds, onUpdate, onDelete, onGoInput }) {
   const { stats } = computeStats(rounds)
+  const badges = computeBadges(rounds)
 
   return (
     <>
+      <TrashTalk rounds={rounds} />
+
       <section className="section">
         <div className="section-head">
           <h2>현재 핸디캡</h2>
@@ -48,7 +64,7 @@ export default function Dashboard({ rounds, onUpdate, onDelete, onGoInput }) {
         </div>
         <div className="member-grid">
           {MEMBERS.map((m, i) => (
-            <MemberCard key={m} s={stats[m]} slot={i + 1} />
+            <MemberCard key={m} s={stats[m]} slot={i + 1} badges={badges[m]} />
           ))}
         </div>
       </section>

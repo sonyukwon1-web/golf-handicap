@@ -2,7 +2,14 @@ import { MEMBERS, isScore } from './handicap.js'
 
 const KEY = 'golf-handicap:v1'
 
-export const emptyData = () => ({ version: 1, members: MEMBERS, rounds: [] })
+export const DEFAULT_PENALTIES = ['밥 사기', '커피 사기', '다음 라운드 캐디피 내기']
+
+export const emptyData = () => ({
+  version: 2,
+  members: MEMBERS,
+  rounds: [],
+  penalties: [...DEFAULT_PENALTIES],
+})
 
 export function newId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
@@ -22,17 +29,28 @@ export function normalize(raw) {
         const v = Number(r.scores?.[m])
         scores[m] = r.scores?.[m] === null || r.scores?.[m] === '' || !Number.isFinite(v) ? null : v
       }
+      // 벌칙은 나중에 붙은 항목이라 없을 수 있다
+      const penalty =
+        r.penalty && typeof r.penalty.text === 'string' && Array.isArray(r.penalty.members)
+          ? { text: r.penalty.text, members: r.penalty.members.filter((m) => MEMBERS.includes(m)) }
+          : null
+
       return {
         id: typeof r.id === 'string' && r.id ? r.id : newId(),
         date: r.date,
         course: typeof r.course === 'string' ? r.course : '',
         scores,
         createdAt: Number.isFinite(Number(r.createdAt)) ? Number(r.createdAt) : i,
+        penalty,
       }
     })
     .filter((r) => MEMBERS.some((m) => isScore(r.scores[m])))
 
-  return { version: 1, members: MEMBERS, rounds: clean }
+  const penalties = Array.isArray(raw.penalties)
+    ? [...new Set(raw.penalties.filter((p) => typeof p === 'string' && p.trim()).map((p) => p.trim()))]
+    : [...DEFAULT_PENALTIES]
+
+  return { version: 2, members: MEMBERS, rounds: clean, penalties }
 }
 
 export function load() {
@@ -62,7 +80,7 @@ export function exportFile(data) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `골프핸디캡_${stamp}.json`
+  a.download = `낙원골프_${stamp}.json`
   document.body.appendChild(a)
   a.click()
   a.remove()

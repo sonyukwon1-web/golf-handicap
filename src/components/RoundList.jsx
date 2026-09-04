@@ -133,6 +133,11 @@ export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
                 ) : (
                   <>
                     <RoundDetail round={r} />
+                    {r.penalty && (
+                      <p className="penalty-tag">
+                        🎯 <b>{r.penalty.members.join(', ')}</b> — {r.penalty.text}
+                      </p>
+                    )}
                     <div className="round-actions">
                       <button className="btn sm" onClick={() => setEditId(r.id)}>수정</button>
                       <button
