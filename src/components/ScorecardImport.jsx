@@ -62,7 +62,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     setNote('사진 준비 중')
 
     try {
-      setNote('스코어카드 읽는 중 (10초쯤 걸립니다)')
+      setNote('스코어카드 읽는 중… 10초쯤 걸려요')
       const card = await readScorecard(file)
 
       if (!card.rows?.length) {
@@ -223,7 +223,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
 
       {busy && (
         <div className="ocr-progress" role="status">
-          <div className="bar indeterminate"><span /></div>
+          <span className="spinner" aria-hidden="true" />
           <p>{note}</p>
         </div>
       )}
