@@ -13,7 +13,7 @@ import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
 import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, sortRounds } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
-import { exportFile, importFile, load, save, normalize } from './lib/storage.js'
+import { load, save, normalize } from './lib/storage.js'
 import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
 import { loadPhotos } from './lib/photos.js'
 
@@ -36,7 +36,6 @@ export default function App() {
   const [message, setMessage] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)  // 방금 저장한 라운드
   const [inputMode, setInputMode] = useState('holes')
-  const fileRef = useRef(null)
 
   /*
     ══════════════════════════════════════════════════════════
@@ -252,31 +251,6 @@ export default function App() {
     ? outcomes.find((o) => o.id === 고른라운드.id) || null
     : latest
 
-  const onExport = () => {
-    if (roundCount === 0) {
-      setMessage({ kind: 'error', text: '내보낼 기록이 없습니다.' })
-      return
-    }
-    exportFile(data)
-  }
-
-  const onImport = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-
-    if (roundCount > 0 && !confirm(`현재 ${roundCount}개의 라운드 기록이 불러온 파일로 대체됩니다. 계속할까요?`)) return
-
-    try {
-      const next = await importFile(file)
-      setData(next)
-      setTab('home')
-      setMessage({ kind: 'info', text: `${next.rounds.length}개 라운드를 불러왔습니다.` })
-    } catch (err) {
-      setMessage({ kind: 'error', text: err.message })
-    }
-  }
-
   return (
     <div className="app">
       <header className="topbar">
@@ -286,17 +260,18 @@ export default function App() {
               <h1>⛳ 낙원 골프</h1>
               <span>{roundCount}라운드</span>
             </div>
+            {/*
+              **여기 있어야 할 것은 새로고침이다.**
+
+              내보내기·불러오기는 기기끼리 손으로 옮기던 때의 자리다. 이제
+              저절로 맞춰지므로 쓸 일이 없고, 잘못 누르면 지금 기록을 통째로
+              덮어써서 위험하기만 했다.
+
+              대신 홈 화면에 추가해 열면 주소창이 없어 새로고침할 자리가
+              없다 — 늘 보이는 이 자리에 둔다.
+            */}
             <div className="topbar-actions">
-              <button className="ghost-btn" onClick={onExport}>내보내기</button>
-              <button className="ghost-btn" onClick={() => fileRef.current?.click()}>불러오기</button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="application/json,.json"
-                onChange={onImport}
-                className="sr-only"
-                aria-label="JSON 파일 불러오기"
-              />
+              <button className="ghost-btn" onClick={() => location.reload()}>새로고침</button>
             </div>
           </div>
 
@@ -441,7 +416,6 @@ export default function App() {
         {tab !== 'input' && (
           <p className="foot-note">
             기록과 사진은 <b>기기끼리 저절로 맞춰집니다</b> — 휴대폰에서 넣은 것이 PC 에도 뜹니다.
-            따로 챙겨 두려면 “내보내기”로 JSON 파일을 받아 두세요 (사진도 함께 담깁니다).
           </p>
         )}
       </main>

@@ -1,5 +1,4 @@
 import { DEFAULT_RANKING, MEMBERS, isScore } from './handicap.js'
-import { loadPhotos, savePhotos } from './photos.js'
 import { HOLES, completeTotal } from './holes.js'
 
 const KEY = 'golf-handicap:v1'
@@ -137,56 +136,4 @@ export function save(data) {
   }
 }
 
-/**
- * 내보내기 — **사진까지 함께 담는다.**
- *
- * 기록과 사진이 서로 다른 자리에 담기다 보니(golf-handicap:v1 · nakwon.photos)
- * 내보낸 파일에는 기록만 들어 있었다. 받는 쪽에서 열면 얼굴이 전부 성 한
- * 글자로 돌아갔다 — 기기를 옮기는 유일한 통로에서 절반이 새고 있던 셈이다.
- */
-export function exportFile(data) {
-  const stamp = new Date().toISOString().slice(0, 10)
-  const blob = new Blob([JSON.stringify({ ...data, photos: loadPhotos(), exportedAt: new Date().toISOString() }, null, 2)], {
-    type: 'application/json',
-  })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `낙원골프_${stamp}.json`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
-export function importFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result))
-        const data = normalize(parsed)
-        if (data.rounds.length === 0) throw new Error('유효한 라운드 기록이 없습니다.')
-
-        /*
-          사진도 함께 들어온다. **없으면 지금 것을 그대로 둔다** — 사진 없이
-          내보낸 옛 파일을 열었다고 이 기기의 얼굴까지 지울 까닭이 없다.
-        */
-        if (parsed.photos && typeof parsed.photos === 'object') {
-          const 사진 = {}
-          for (const m of MEMBERS) {
-            const v = parsed.photos[m]
-            if (typeof v === 'string' && v.startsWith('data:image/')) 사진[m] = v
-          }
-          if (Object.keys(사진).length) savePhotos({ ...loadPhotos(), ...사진 })
-        }
-
-        resolve(data)
-      } catch (e) {
-        reject(new Error(`파일을 읽을 수 없습니다: ${e.message}`))
-      }
-    }
-    reader.onerror = () => reject(new Error('파일을 읽는 중 오류가 발생했습니다.'))
-    reader.readAsText(file)
-  })
-}
+/* 내보내기·불러오기는 걷어냈다 — 기기끼리 저절로 맞춰지므로 손으로 옮길 일이 없다 */
