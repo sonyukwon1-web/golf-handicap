@@ -61,7 +61,11 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
       <section className="section">
         <div className="section-head">
           <h2>현재 핸디캡</h2>
-          <span className="hint">최근 5경기 평균 기준 · 그로스에서 빼는 타수</span>
+          {/*
+            '그로스에서 빼는 타수' — 그로스가 무슨 말인지 모르면 이 줄은 아무것도
+            알려 주지 않는다. 아는 사람만 아는 말을 쓰지 않는다.
+          */}
+          <span className="hint">최근 5경기 평균으로 정합니다 · 친 타수에서 이만큼 빼 줍니다</span>
         </div>
 
         {/*
