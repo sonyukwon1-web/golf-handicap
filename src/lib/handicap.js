@@ -80,7 +80,20 @@ export function computeStats(rounds, opts = DEFAULT_RANKING) {
   for (const m of MEMBERS) {
     const s = stats[m]
     if (s.average === null || baseAverage === null) continue
-    s.handicap = capped(Math.round(s.average - baseAverage), opts?.cap)
+    /*
+      ══════════════════════════════════════════════════════════
+      **화면에 적힌 수끼리 빼야 한다.**
+
+      여태 반올림하기 **전** 평균끼리 뺀 뒤 반올림했다. 그런데 화면에 적히는
+      평균은 이미 반올림한 값이라, 117 과 90 이 나란히 적혀 있는데 핸디는
+      26 이 되는 일이 생겼다 (116.6 − 90.4 = 26.2). 보는 사람은 27 을 셈하고
+      앱은 26 을 적으니 어느 쪽이 틀렸는지 알 수가 없다.
+
+      **적히는 값으로 뺀다.** 기준 평균이 가장 낮으므로 반올림한 뒤에도
+      순서가 뒤집히지 않아, 핸디가 음수가 될 일은 없다.
+      ══════════════════════════════════════════════════════════
+    */
+    s.handicap = capped(Math.round(s.average) - Math.round(baseAverage), opts?.cap)
     s.isBase = s.average === baseAverage
   }
 
