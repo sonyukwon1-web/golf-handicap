@@ -165,8 +165,21 @@ export default function TrendChart({ rounds, 번호 }) {
     HEIGHT - PAD.bottom,
   )
 
-  const pick = (clientX, rect) => {
-    const x = clientX - rect.left
+  /*
+    ══════════════════════════════════════════════════════════════
+    **누른 자리를 그림의 좌표로 옮길 때 굴린 만큼을 더한다.**
+
+    `clientX - rect.left` 는 **화면에 보이는 상자 안에서** 얼마나 오른쪽인지다.
+    그림은 상자보다 넓어 가로로 굴러가므로, 오른쪽으로 200px 밀어 놓은 채
+    누르면 그림에서는 200px 더 오른쪽인 자리를 누른 것이다. 그 몫을 안 더하니
+    민 만큼 통째로 어긋난 점이 잡혔다 — 4번을 눌렀는데 2번이 뜨는 식이다.
+
+    라운드가 적어 굴릴 것이 없던 때는 scrollLeft 가 늘 0 이라 드러나지 않았다.
+    ══════════════════════════════════════════════════════════════
+  */
+  const pick = (clientX, el) => {
+    const rect = el.getBoundingClientRect()
+    const x = clientX - rect.left + el.scrollLeft
     let best = 0
     let bestD = Infinity
     for (let i = 1; i <= n; i++) {
@@ -198,8 +211,7 @@ export default function TrendChart({ rounds, 번호 }) {
       return
     }
     if (pinned) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    setHover(pick(e.clientX, rect))
+    setHover(pick(e.clientX, e.currentTarget))
   }
 
   const onDown = (e) => {
@@ -210,8 +222,7 @@ export default function TrendChart({ rounds, 번호 }) {
     const d = down.current
     down.current = null
     if (!d || d.moved > 6) return   // 굴린 것이다
-    const rect = e.currentTarget.getBoundingClientRect()
-    const at = pick(e.clientX, rect)
+    const at = pick(e.clientX, e.currentTarget)
     if (pinned === at) { setPinned(null); setHover(null) }
     else { setPinned(at); setHover(at) }
   }
