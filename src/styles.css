@@ -444,6 +444,38 @@ main.shell { padding-top: 20px; }
 }
 .rank-opts .cap .unit { color: var(--ink-3); }
 
+/* 켜면 누가 몇 타 깎이는지 — 스위치 바로 밑에 */
+.rank-cuts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+}
+.rank-cuts li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.rank-cuts b {
+  font: 700 12.5px Oswald, sans-serif;
+  color: var(--primary, var(--green));
+  font-variant-numeric: tabular-nums;
+}
+/* 기준자는 깎을 것이 없다 — 물러선다 */
+.rank-cuts li[data-base] b { color: var(--ink-3); }
+
 /* '기준' 처럼 이름 옆에 붙는 작은 딱지 */
 .badge {
   font-size: 10.5px;

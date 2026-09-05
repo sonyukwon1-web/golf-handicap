@@ -277,7 +277,7 @@ export default function App() {
               <span className="hint">{roundCount}개</span>
             </div>
             {/* 순위를 보는 자리에 켜고 끄는 자리를 함께 둔다 */}
-            <RankOptions ranking={ranking} onRanking={setRanking} />
+            <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
             <RoundList rounds={rounds} ranking={ranking} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
@@ -288,7 +288,7 @@ export default function App() {
               <h2>명예의 전당 &amp; 흑역사관</h2>
               <span className="hint">{roundCount}라운드 누적</span>
             </div>
-            <RankOptions ranking={ranking} onRanking={setRanking} />
+            <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
 
             {/*
               ══════════════════════════════════════════════════════════
@@ -345,9 +345,8 @@ export default function App() {
 
         {tab !== 'input' && (
           <p className="foot-note">
-            기록과 사진은 <b>이 기기, 이 브라우저에만</b> 저장됩니다 — 휴대폰과 PC 가 따로 놉니다.
-            옮기려면 “내보내기”로 받은 JSON 파일을 전달하고, 받는 쪽에서 “불러오기”로 열면 됩니다
-            (사진도 함께 담깁니다).
+            기록과 사진은 <b>기기끼리 저절로 맞춰집니다</b> — 휴대폰에서 넣은 것이 PC 에도 뜹니다.
+            따로 챙겨 두려면 “내보내기”로 JSON 파일을 받아 두세요 (사진도 함께 담깁니다).
           </p>
         )}
       </main>

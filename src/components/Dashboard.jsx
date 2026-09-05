@@ -87,7 +87,7 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
           잘 쳐도 못 이기는 판이 되기 때문에, 몇 타까지 봐줄지는 그때그때 정한다.
           ══════════════════════════════════════════════════════════
         */}
-        <RankOptions ranking={ranking} onRanking={onRanking} />
+        <RankOptions ranking={ranking} onRanking={onRanking} stats={stats} members={MEMBERS} />
         {/*
           **기준이 맨 위, 그 아래로 핸디가 적은 순.**
 
