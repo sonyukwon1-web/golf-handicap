@@ -59,7 +59,7 @@ export default function Podium({ round, ranking, compact = false }) {
 
       {/* 꼴찌는 벙커 — 세 명 이하로 친 라운드면 시상대만 나온다 */}
       {last && last.rank !== 1 && (
-        <div className="rise" style={{ position: 'relative' }}>
+        <div className="rise bunker-wrap">
           <BunkerFace member={last.member} src={photos[last.member]} size={compact ? 76 : 96} />
 
           {/*
@@ -74,9 +74,13 @@ export default function Podium({ round, ranking, compact = false }) {
             <b>{last.rank}</b>
           </span>
 
-          <span className="bunker-tag">
-            {last.rank}위 {last.member} · {score(last)}
-          </span>
+          {/*
+            이름표는 그림 **밑에 한 칸 띄워** 놓는다. 그림에 붙여 놓으면 모래
+            언덕을 눌러 발치가 잘려 보였다.
+          */}
+          <p className="bunker-tag">
+            {last.rank}위 {last.member} · {score(last)}타
+          </p>
         </div>
       )}
     </>

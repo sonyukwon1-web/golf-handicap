@@ -16,7 +16,7 @@ function HoleAwards({ rounds }) {
     s.par5 && { icon: '🚀', title: '파5 킬러', who: s.par5[0], value: `평균 ${fmt1(s.par5[1])}타`, hint: '파5 홀 평균 오버' },
     s.collapse && { icon: '📉', title: '후반 무너짐', who: s.collapse[0], value: `${fmt1(s.collapse[1])}타`, hint: '전반 대비 후반 평균' },
     s.birdie && { icon: '🐦', title: '버디 사냥꾼', who: s.birdie[0], value: `${s.birdie[1]}회`, hint: '버디 이상' },
-    s.doublePar && { icon: '🍆', title: '양파왕', who: s.doublePar[0], value: `${s.doublePar[1]}회`, hint: '파의 두 배 타수' },
+    s.doublePar && { icon: '🧅', title: '양파왕', who: s.doublePar[0], value: `${s.doublePar[1]}회`, hint: '파의 두 배 이상' },
   ].filter(Boolean)
 
   if (cards.length === 0) return null

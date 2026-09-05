@@ -48,37 +48,61 @@ export default function MemberAvatar({ member, size = 40, rank, src, alt }) {
  * 기하와 색은 podium 레퍼런스 SVG 에서 그대로 가져왔다.
  */
 export function BunkerFace({ member, src, size = 96 }) {
-  /*
-    **얼굴을 얼마나 남길 것인가.**
-
-    60% 는 사진이 없던 때(성 한 글자)의 값이다. 글자는 위쪽에 있어 잘려도
-    읽혔는데, 진짜 얼굴을 넣으니 코 아래가 통째로 잘려 누구인지 알 수 없었다.
-    턱 언저리까지 남긴다 — 모래에 잠긴 느낌은 그대로고 얼굴은 알아본다.
-    (수면선은 아래 `bottom: 78` 이 잡으므로 이 값을 키우면 위로만 자란다)
-  */
   const clip = Math.round(size * 0.82)
 
   return (
-    <div className="bunker" style={{ position: 'relative', height: size * 2.4 }}>
-      {/* 뒤쪽 모래 (테두리) */}
+    <div className="bunker" style={{ position: 'relative', height: size * 2.6 }}>
+      {/* 뒤쪽 모래 언덕 (테두리) */}
       <span style={{ position: 'absolute', left: '50%', bottom: 26, transform: 'translateX(-50%)', width: size * 2.7, height: size * 0.96, borderRadius: '50%', background: 'var(--sand)', border: '3px solid var(--sand-line)', boxSizing: 'border-box' }} />
       <span style={{ position: 'absolute', left: '50%', bottom: 34, transform: 'translateX(-50%)', width: size * 2.25, height: size * 0.69, borderRadius: '50%', background: 'var(--sand-2)' }} />
 
-      {/* 얼굴 — 위 60%만 보인다 */}
+      {/* 얼굴 — 턱 언저리까지 보인다 */}
       <div style={{ position: 'absolute', left: '50%', bottom: 78, transform: 'translateX(-50%)', width: size, height: clip, overflow: 'hidden' }}>
         <div style={{ animation: 'sinkBob 3.4s ease-in-out infinite' }}>
           <MemberAvatar member={member} src={src} size={size} />
         </div>
       </div>
 
-      {/* 앞쪽 모래 — 윗변이 곧 수면선(bottom 78 + height 38) */}
+      {/* 앞쪽 모래 언덕 — 윗변이 곧 수면선 (bottom 78 + height 38) */}
       <span style={{ position: 'absolute', left: '50%', bottom: 40, transform: 'translateX(-50%)', width: size * 2, height: 38, borderRadius: '50%', background: 'var(--sand-2)' }} />
+
+      {/*
+        **손 하나가 모래 밖으로.** 얼굴만 잠겨 있으면 그냥 파묻힌 그림인데,
+        살려 달라고 뻗은 손이 하나 있으면 사연이 생긴다.
+      */}
+      <span aria-hidden="true" style={{ position: 'absolute', left: '50%', bottom: 62, marginLeft: size * 0.62, fontSize: Math.round(size * 0.34), animation: 'waveHand 1.6s ease-in-out infinite', transformOrigin: 'bottom center' }}>
+        🤚
+      </span>
+
+      {/* 모래에 처박힌 골프채 */}
+      <span aria-hidden="true" style={{ position: 'absolute', left: '50%', bottom: 52, marginLeft: -size * 0.95, fontSize: Math.round(size * 0.3), transform: 'rotate(38deg)' }}>
+        🏌️
+      </span>
 
       {/* 눈물 */}
       <span style={{ position: 'absolute', left: '50%', bottom: 98, marginLeft: -32, width: 9, height: 12, borderRadius: '50% 50% 50% 50% / 62% 62% 38% 38%', background: 'var(--rain)', animation: 'tearFall 2.1s ease-in .1s infinite' }} />
       <span style={{ position: 'absolute', left: '50%', bottom: 100, marginLeft: 24, width: 9, height: 12, borderRadius: '50% 50% 50% 50% / 62% 62% 38% 38%', background: 'var(--rain)', animation: 'tearFall 2.1s ease-in 1.05s infinite' }} />
 
-      {/* 먹구름 + 비 */}
+      {/*
+        **머리 위를 맴도는 파리 셋.** 굴욕에는 예로부터 파리가 따른다.
+        각자 다른 때에 다른 크기로 돌아 한 마리씩 따로 노는 것처럼 보인다.
+      */}
+      {[0, 1, 2].map((k) => (
+        <span
+          key={k}
+          aria-hidden="true"
+          style={{
+            position: 'absolute', left: '50%', bottom: 78 + clip - 6,
+            marginLeft: [-26, 4, 22][k],
+            fontSize: 13,
+            animation: `flyLoop ${2.4 + k * 0.6}s linear ${k * 0.5}s infinite`,
+          }}
+        >
+          🪰
+        </span>
+      ))}
+
+      {/* 먹구름 + 비 — 저 혼자만 비를 맞는다 */}
       <div style={{ position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)', width: 120, height: 32 }}>
         <span style={{ position: 'absolute', left: '50%', top: 0, transform: 'translateX(-50%)', width: 96, height: 26, borderRadius: 99, background: '#b8c4ce' }} />
         <span style={{ position: 'absolute', left: 2, top: 9, width: 52, height: 20, borderRadius: 99, background: '#c7d2db' }} />

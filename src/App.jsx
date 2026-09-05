@@ -5,13 +5,14 @@ import HoleRoundForm from './components/HoleRoundForm.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
 import DeviceSync from './components/DeviceSync.jsx'
+import AverageBoard from './components/AverageBoard.jsx'
 import Podium from './components/Podium.jsx'
 import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate } from './lib/handicap.js'
+import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, sortRounds } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save, normalize } from './lib/storage.js'
 import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
@@ -189,6 +190,27 @@ export default function App() {
   /** 가장 최근 라운드 — 랭킹 화면 맨 위 시상대가 본다 (outcomes 는 날짜 오름차순) */
   const latest = outcomes.length ? outcomes[outcomes.length - 1] : null
 
+  /*
+    ══════════════════════════════════════════════════════════
+    **랭킹은 어느 기간을 볼지 고른다.**
+
+    맨 위 시상대만 '가장 최근 라운드' 였고 아래 기록들은 늘 전체였다. 그러면
+    '올해는 누가 잘 쳤나' 를 볼 수가 없다 — 3년치가 뭉뚱그려진 값만 남는다.
+
+    고른 기간이 **아래 전부**에 걸린다: 명예의 전당·흑역사관·홀별 기록·개인
+    기록·시즌 랭킹·라이벌 매치. 한 화면이 한 기간을 말해야 견줄 수 있다.
+    ══════════════════════════════════════════════════════════
+  */
+  const [기간, set기간] = useState('recent')
+  const 해목록 = [...new Set(rounds.map((r) => String(r.date).slice(0, 4)).filter(Boolean))]
+    .sort((a, b) => (a < b ? 1 : -1))
+
+  const 기간라운드 = (() => {
+    if (기간 === 'last5') return sortRounds(rounds).slice(-5)
+    if (/^\d{4}$/.test(기간)) return rounds.filter((r) => String(r.date).startsWith(기간))
+    return rounds
+  })()
+
   const onExport = () => {
     if (roundCount === 0) {
       setMessage({ kind: 'error', text: '내보낼 기록이 없습니다.' })
@@ -290,16 +312,23 @@ export default function App() {
             </div>
             <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
 
+            {/* 어느 기간을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
+            <label className="period-pick">
+              <span>보기</span>
+              <select value={기간} onChange={(e) => set기간(e.target.value)}>
+                <option value="recent">최근 라운드</option>
+                <option value="last5">최근 5개 라운드 평균</option>
+                {해목록.map((y) => <option key={y} value={y}>{y}년 평균</option>)}
+              </select>
+            </label>
+
             {/*
-              ══════════════════════════════════════════════════════════
               **가장 최근 라운드의 시상대를 맨 위에.**
 
               이 그림은 라운드를 저장한 그 순간에만 떴다. 닫고 나면 다시 볼
               방법이 없어서, 정작 자랑하고 싶을 때 꺼낼 것이 없었다.
-              순위를 보러 오는 자리에 두면 늘 볼 수 있다.
-              ══════════════════════════════════════════════════════════
             */}
-            {latest && (
+            {기간 === 'recent' && latest && (
               <div className="card podium-card">
                 <div className="fame-head">
                   <h3>🏆 최근 라운드</h3>
@@ -309,9 +338,19 @@ export default function App() {
               </div>
             )}
 
-            <HallOfFame rounds={rounds} ranking={ranking} />
-            <SeasonRanking rounds={rounds} ranking={ranking} />
-            <RivalMatch rounds={rounds} ranking={ranking} />
+            {기간 !== 'recent' && (
+              <>
+                <div className="fame-head" style={{ marginTop: 2 }}>
+                  <h3>📊 {기간 === 'last5' ? '최근 5개 라운드 평균' : `${기간}년 평균`}</h3>
+                  <span className="hint">{기간라운드.length}라운드 · 친 타수 그대로</span>
+                </div>
+                <AverageBoard rounds={기간라운드} />
+              </>
+            )}
+
+            <HallOfFame rounds={기간라운드} ranking={ranking} />
+            <SeasonRanking rounds={기간라운드} ranking={ranking} />
+            <RivalMatch rounds={기간라운드} ranking={ranking} />
           </section>
         )}
 

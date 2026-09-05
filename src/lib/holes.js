@@ -138,8 +138,13 @@ export function holeStats(rounds) {
   const countBy = (m, fn) => per[m].filter(fn).length
 
   const birdies = played.map((m) => [m, countBy(m, (r) => r.over <= -1)]).sort((a, b) => b[1] - a[1])
-  // 양파 = 파의 두 배 타수. over 가 par 와 같으면 양파다.
-  const doubles = played.map((m) => [m, countBy(m, (r) => r.over === r.par)]).sort((a, b) => b[1] - a[1])
+  /*
+   * 양파 = 파의 두 배 타수. over 가 par 와 같으면 양파다 (파4에 8타).
+   *
+   * **그보다 더 친 것도 센다.** 딱 두 배만 세면 파4에 9타를 친 날이 아무 데도
+   * 안 잡힌다 — 더 못 쳤는데 기록에서 사라지는 셈이다.
+   */
+  const doubles = played.map((m) => [m, countBy(m, (r) => r.over >= r.par)]).sort((a, b) => b[1] - a[1])
 
   return {
     rounds: rounds.filter(hasHoleData).length,
@@ -155,7 +160,7 @@ export function holeStats(rounds) {
       par5: parAvg(m, 5),
       collapse: collapse(m),
       birdies: countBy(m, (r) => r.over <= -1),
-      doublePars: countBy(m, (r) => r.over === r.par),
+      doublePars: countBy(m, (r) => r.over >= r.par),
     })),
   }
 }

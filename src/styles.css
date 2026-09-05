@@ -246,7 +246,17 @@
 /* ── 벙커 씬 모션 ───────────────────────────────────────── */
 @keyframes rainFall { 0% { transform: rotate(12deg) translateY(-6px); opacity: 0 } 25% { opacity: .9 } 100% { transform: rotate(12deg) translateY(52px); opacity: 0 } }
 @keyframes tearFall { 0% { transform: translateY(0); opacity: 0 } 25% { opacity: 1 } 100% { transform: translateY(26px); opacity: 0 } }
-@keyframes sinkBob  { 0%, 100% { transform: rotate(-7deg) translateY(0) } 50% { transform: rotate(-7deg) translateY(3px) } }
+@keyframes sinkBob  { 0%, 100% { transform: rotate(-9deg) translateY(0) } 50% { transform: rotate(-9deg) translateY(4px) } }
+/* 살려 달라고 흔드는 손 */
+@keyframes waveHand { 0%, 100% { transform: rotate(-18deg) } 50% { transform: rotate(16deg) } }
+/* 머리 위를 맴도는 파리 — 작은 타원을 그린다 */
+@keyframes flyLoop {
+  0%   { transform: translate(0, 0) }
+  25%  { transform: translate(9px, -7px) }
+  50%  { transform: translate(0, -11px) }
+  75%  { transform: translate(-9px, -6px) }
+  100% { transform: translate(0, 0) }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .rise, [class*='bunker'] * { animation: none !important }
@@ -1224,24 +1234,84 @@ input[data-warn] { border-color: var(--warn, #b26a00); }
   background: var(--sand-line);
 }
 
-/* 누가 빠졌는지 — 그림 발치를 누르지 않게 왼쪽 아래로 떼어 놓는다 */
+/* 벙커 그림과 이름표를 한 덩어리로 — 깃대가 그림 안에 자리를 잡게 */
+.bunker-wrap { position: relative; }
+
+/* 누가 빠졌는지 — 그림 밑에 한 칸 띄워 가운데에 */
 .bunker-tag {
-  position: absolute;
-  left: 4px;
-  bottom: 0;
+  margin: 6px auto 0;
+  width: fit-content;
   font: 700 12px Pretendard, sans-serif;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 6px 13px;
+  padding: 6px 14px;
   box-shadow: var(--shadow);
   white-space: nowrap;
 }
 
+/* ── 기간 고르개 · 평균 판 ────────────────────────────── */
+.period-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.period-pick select {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.avg-board { list-style: none; margin: 0; padding: 4px 0; }
+.avg-board li {
+  display: grid;
+  grid-template-columns: 22px auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+}
+.avg-board li + li { border-top: 1px solid var(--line); }
+.avg-board .rank-num { font-size: 15px; text-align: center; }
+.avg-name { font-size: 14.5px; font-weight: 700; min-width: 0; }
+.avg-sub { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.avg-sub b { color: var(--ink-2); font-weight: 700; }
+.avg-num {
+  min-width: 46px;
+  text-align: right;
+  font: 700 24px Oswald, sans-serif;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.avg-board li.avg-note {
+  display: block;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+@media (max-width: 360px) {
+  .avg-board li { grid-template-columns: 22px auto 1fr auto; }
+  .avg-sub { grid-column: 3; grid-row: 2; }
+}
+
 /* 랭킹 화면 맨 위의 시상대 카드 — 잔디 위에 세운다 */
+/*
+  잔디 위에 세운 시상대 카드.
+
+  **아래를 넉넉히 비운다.** 여백 없이 두었더니 벙커 그림의 모래 언덕과 이름표가
+  카드 밑선에 잘렸다(overflow: hidden 은 둥근 모서리를 살리려 남긴다).
+*/
 .podium-card {
-  padding: 14px 14px 0;
+  padding: 14px 14px 18px;
   overflow: hidden;
   background: linear-gradient(180deg, var(--surface) 55%, var(--grass-1));
 }
