@@ -1,4 +1,4 @@
-import { MEMBERS, fmtAvg, isScore } from '../lib/handicap.js'
+import { MEMBERS, fmtAvg, isScore, scoresOf, sortRounds } from '../lib/handicap.js'
 import MemberAvatar from './MemberAvatar.jsx'
 import { loadPhotos } from '../lib/photos.js'
 
@@ -11,12 +11,27 @@ import { loadPhotos } from '../lib/photos.js'
  * **친 타수 그대로 센다.** 핸디는 이 평균에서 나오는 값이라, 여기에 다시
  * 적용하면 제 꼬리를 무는 셈이다.
  */
-export default function AverageBoard({ rounds, note }) {
+export default function AverageBoard({ rounds, note, perMember }) {
   const photos = loadPhotos()
+  const sorted = sortRounds(rounds)
 
   const 줄 = MEMBERS
     .map((m, i) => {
-      const 친것 = rounds.map((r) => r.scores?.[m]).filter(isScore)
+      /*
+        ══════════════════════════════════════════════════════════
+        **'최근 5개' 는 사람마다 다르다.**
+
+        라운드 다섯 개를 잘라 그 안의 기록만 세면, 한 번 빠진 사람은 넷으로
+        셈된다. 홈 화면의 핸디는 **그 사람이 마지막으로 친 다섯 번**을 보므로
+        두 수가 어긋났다 — 같은 '최근 5개 평균' 인데 값이 달랐다.
+
+        perMember 를 받으면 사람마다 제 마지막 다섯 번을 센다 (홈과 같은 셈).
+        연도 평균은 그 해에 친 것 전부라 이 값을 안 받는다.
+        ══════════════════════════════════════════════════════════
+      */
+      const 친것 = perMember
+        ? scoresOf(sorted, m).slice(-perMember)
+        : rounds.map((r) => r.scores?.[m]).filter(isScore)
       return {
         member: m,
         slot: i + 1,

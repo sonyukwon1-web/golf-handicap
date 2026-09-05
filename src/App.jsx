@@ -11,7 +11,7 @@ import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, sortRounds } from './lib/handicap.js'
+import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, scoresOf, sortRounds } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { load, save, normalize } from './lib/storage.js'
 import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
@@ -210,10 +210,14 @@ export default function App() {
    * 결국 '누가 몇 타로 몇 등' 이라 같은 모양에 담긴다 — 부품을 새로 만들지 않고
    * 재료만 맞춰 준다.
    */
-  const 평균시상대 = (list) => {
+  const 평균시상대 = (list, perMember) => {
+    const 정렬 = sortRounds(list)
     const 줄 = MEMBERS
       .map((m) => {
-        const 친것 = list.map((r) => r.scores?.[m]).filter((v) => typeof v === 'number' && Number.isFinite(v))
+        /* 아래 평균 판과 **같은 셈**을 써야 시상대와 목록의 수가 안 갈린다 */
+        const 친것 = perMember
+          ? scoresOf(정렬, m).slice(-perMember)
+          : list.map((r) => r.scores?.[m]).filter((v) => typeof v === 'number' && Number.isFinite(v))
         return 친것.length ? { member: m, avg: 친것.reduce((a, b) => a + b, 0) / 친것.length } : null
       })
       .filter(Boolean)
@@ -239,13 +243,21 @@ export default function App() {
   const 최신순 = sortRounds(rounds).slice().reverse()
   const 고른라운드 = 최신순.find((r) => String(r.id) === 기간) || null
 
+  /*
+    '최근 5개 라운드' 는 **사람마다 제 마지막 다섯 번**을 뜻한다 (홈 핸디와 같은 셈).
+    아래 홀별 기록·라이벌은 라운드 묶음이 있어야 하므로 최근 다섯 라운드를 쓴다.
+  */
+  const 사람별5 = 기간 === 'last5' ? 5 : null
+
   const 기간라운드 = (() => {
     if (기간 === 'last5') return sortRounds(rounds).slice(-5)
     if (/^\d{4}$/.test(기간)) return rounds.filter((r) => String(r.date).startsWith(기간))
     if (고른라운드) return [고른라운드]
     return rounds
   })()
-  const 평균순위 = 기간 === 'last5' || /^\d{4}$/.test(기간) ? 평균시상대(기간라운드) : null
+  const 평균순위 = 기간 === 'last5' || /^\d{4}$/.test(기간)
+    ? 평균시상대(사람별5 ? rounds : 기간라운드, 사람별5)
+    : null
   /** 고른 그 라운드의 순위 (없으면 가장 최근) */
   const 볼라운드 = 고른라운드
     ? outcomes.find((o) => o.id === 고른라운드.id) || null
@@ -382,7 +394,7 @@ export default function App() {
               </div>
             )}
 
-            {평균순위 && <AverageBoard rounds={기간라운드} />}
+            {평균순위 && <AverageBoard rounds={사람별5 ? rounds : 기간라운드} perMember={사람별5} />}
 
             <HallOfFame rounds={기간라운드} ranking={ranking} />
             <RivalMatch rounds={기간라운드} ranking={ranking} />
