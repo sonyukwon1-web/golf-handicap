@@ -79,7 +79,13 @@ export function verifyRow(pars, overs, claimedTotal) {
 
 // ── 홀별 기록에서 뽑는 재미 통계 ─────────────────────────
 
-/** 홀별 기록이 있는 라운드에서 (member, par, over) 를 전부 펼친다 */
+/**
+ * 홀별 기록이 있는 라운드에서 (member, par, over) 를 전부 펼친다.
+ *
+ * **어느 라운드의 홀인지(round)를 함께 담는다.** 전반·후반 차이는 라운드마다
+ * 따로 재서 평균 내야 한다 — 여러 라운드의 홀을 한 자루에 부어 놓고 재면
+ * 어느 날 무너졌는지가 뭉개진다.
+ */
 function flatten(rounds) {
   const out = []
   for (const r of rounds) {
@@ -91,7 +97,7 @@ function flatten(rounds) {
         const p = num(r.pars[i])
         const o = num(overs[i])
         if (p === null || o === null) continue
-        out.push({ member: m, hole: i, par: p, over: o })
+        out.push({ round: r.id, member: m, hole: i, par: p, over: o })
       }
     }
   }
@@ -117,11 +123,35 @@ export function holeStats(rounds) {
     return hit.length >= 4 ? mean(hit.map((r) => r.over)) : null
   }
 
-  const collapse = (m) => {
-    const front = per[m].filter((r) => r.hole < FRONT)
-    const back = per[m].filter((r) => r.hole >= FRONT)
-    if (front.length < 9 || back.length < 9) return null
-    return mean(back.map((r) => r.over)) - mean(front.map((r) => r.over))
+  /*
+    ══════════════════════════════════════════════════════════════
+    **전반·후반 차이는 라운드마다 잰다. 단위는 '타'.**
+
+    여태 여러 라운드의 홀을 한 자루에 부어 놓고 홀당 평균을 뺐다. 그러니
+    '-0.4타' 같은 수가 나왔는데, 이것은 홀 하나당 0.4타라는 말이라 아무도
+    그렇게 안 읽는다 — 게다가 어느 날 무너졌는지도 뭉개진다.
+
+    라운드 하나에서 **후반 9홀 합계 − 전반 9홀 합계**를 재고, 그 값을 라운드
+    수만큼 평균 낸다. '후반에 +3타 더 쳤다' 로 곧장 읽힌다.
+
+    파가 아니라 **파 대비 타수(over)로 뺀다** — 전반과 후반의 파 합계가 다른
+    코스(36/35 같은)에서 친 타수로 빼면 코스 탓이 사람 탓으로 둔갑한다.
+    ══════════════════════════════════════════════════════════════
+  */
+  const nineGap = (m) => {
+    const 라운드별 = new Map()
+    for (const r of per[m]) {
+      if (!라운드별.has(r.round)) 라운드별.set(r.round, { front: [], back: [] })
+      라운드별.get(r.round)[r.hole < FRONT ? 'front' : 'back'].push(r.over)
+    }
+    const gaps = []
+    for (const { front, back } of 라운드별.values()) {
+      /* 한쪽이라도 아홉 칸이 안 차면 견줄 수 없다 */
+      if (front.length < FRONT || back.length < FRONT) continue
+      const 합 = (a) => a.reduce((x, y) => x + y, 0)
+      gaps.push(합(back) - 합(front))
+    }
+    return mean(gaps)
   }
 
   const lowest = (values) => {
@@ -141,31 +171,37 @@ export function holeStats(rounds) {
   /*
    * 양파 = 파의 두 배 타수. over 가 par 와 같으면 양파다 (파4에 8타).
    *
-   * **그보다 더 친 것도 센다.** 딱 두 배만 세면 파4에 9타를 친 날이 아무 데도
-   * 안 잡힌다 — 더 못 쳤는데 기록에서 사라지는 셈이다.
+   * **양파가 그 홀의 최대 타수다.** 우리는 파의 두 배를 치면 거기서 홀아웃한
+   * 것으로 적으므로 파4에 9타 같은 것은 애초에 안 들어온다. `>=` 로 둔 것은
+   * 손으로 잘못 적힌 칸이 조용히 빠지지 않게 하는 그물일 뿐이다.
    */
   const doubles = played.map((m) => [m, countBy(m, (r) => r.over >= r.par)]).sort((a, b) => b[1] - a[1])
 
   return {
     rounds: rounds.filter(hasHoleData).length,
     par3: lowest((m) => parAvg(m, 3)),
+    /* 파4 는 한 라운드에 열 홀이라 가장 두꺼운 표본인데 여태 빠져 있었다 */
+    par4: lowest((m) => parAvg(m, 4)),
     par5: lowest((m) => parAvg(m, 5)),
     /*
-      **아무도 안 무너졌으면 왕을 세우지 않는다.**
+      **무너진 사람과 살아난 사람을 따로 세운다.**
 
-      넷 다 후반이 더 좋았던 날에도 '후반 무너짐 — 손유권 0.0타' 가 떴다.
-      가장 덜 좋아진 사람일 뿐인데 무너졌다고 적히니, 잘 친 사람이 상처를
-      받는다. 버디·양파를 0회면 감추는 것과 같은 잣대다.
+      넷 다 후반이 더 좋았던 날에도 '후반 무너짐' 왕이 섰다 — 가장 덜 좋아진
+      사람일 뿐인데 무너졌다고 적히니 억울하다. 후반에 **더 친** 사람만
+      무너진 것이고(+), 후반에 **덜 친** 사람은 살아난 것이다(−).
+      해당하는 사람이 없으면 그 상은 아예 안 준다.
     */
-    collapse: (() => { const top = highest(collapse); return top && top[1] > 0 ? top : null })(),
+    collapse: (() => { const top = highest(nineGap); return top && top[1] > 0 ? top : null })(),
+    revive: (() => { const top = lowest(nineGap); return top && top[1] < 0 ? top : null })(),
     birdie: birdies[0]?.[1] > 0 ? birdies[0] : null,
     doublePar: doubles[0]?.[1] > 0 ? doubles[0] : null,
     table: played.map((m) => ({
       member: m,
       holes: per[m].length,
       par3: parAvg(m, 3),
+      par4: parAvg(m, 4),
       par5: parAvg(m, 5),
-      collapse: collapse(m),
+      collapse: nineGap(m),
       birdies: countBy(m, (r) => r.over <= -1),
       doublePars: countBy(m, (r) => r.over >= r.par),
     })),

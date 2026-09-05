@@ -7,6 +7,7 @@ import RoundForm from './components/RoundForm.jsx'
 import DeviceSync from './components/DeviceSync.jsx'
 import AverageBoard from './components/AverageBoard.jsx'
 import Podium from './components/Podium.jsx'
+import PersonalBest from './components/PersonalBest.jsx'
 import RoundList from './components/RoundList.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
@@ -347,6 +348,7 @@ export default function App() {
             </div>
             {/* 핸디 상한은 홈 한 곳에서만 정한다 — 같은 상자가 세 화면에 있으면
                 어디서 고쳐야 하는지 헷갈리고, 정작 볼 것을 아래로 밀어낸다 */}
+            <PersonalBest rounds={rounds} />
             <RoundList rounds={rounds} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}

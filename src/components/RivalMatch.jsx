@@ -66,7 +66,8 @@ export default function RivalMatch({ rounds, period }) {
           </div>
 
           <p className="rival-gap">
-            평균 타수 차이{' '}
+            {/* 한 라운드만 보고 있을 때 '평균' 이라 적으면 여러 판을 뭉갠 것처럼 읽힌다 */}
+            {h.played > 1 ? '평균 타수 차이' : '타수 차이'}{' '}
             <b>
               {h.avgGrossGap === 0
                 ? '없음'

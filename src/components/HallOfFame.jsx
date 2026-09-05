@@ -18,11 +18,13 @@ function HoleAwards({ rounds, period }) {
   if (!s) return null
 
   const cards = [
-    s.par3 && { icon: '🎯', title: '파3 킬러', who: s.par3[0], value: `평균 ${fmt1(s.par3[1])}타`, hint: '파3 홀 평균 오버' },
-    s.par5 && { icon: '🚀', title: '파5 킬러', who: s.par5[0], value: `평균 ${fmt1(s.par5[1])}타`, hint: '파5 홀 평균 오버' },
-    s.collapse && { icon: '📉', title: '후반 무너짐', who: s.collapse[0], value: `${fmt1(s.collapse[1])}타`, hint: '전반 대비 후반 평균' },
+    s.par3 && { icon: '🎯', title: '파3 킬러', who: s.par3[0], value: `평균 ${fmt1(s.par3[1])}타`, hint: '파3 홀에서 파보다' },
+    s.par4 && { icon: '🏹', title: '파4 킬러', who: s.par4[0], value: `평균 ${fmt1(s.par4[1])}타`, hint: '파4 홀에서 파보다' },
+    s.par5 && { icon: '🚀', title: '파5 킬러', who: s.par5[0], value: `평균 ${fmt1(s.par5[1])}타`, hint: '파5 홀에서 파보다' },
+    s.collapse && { icon: '📉', title: '후반 무너짐', who: s.collapse[0], value: `${fmt1(s.collapse[1])}타`, hint: '전반보다 후반에 더 침' },
+    s.revive && { icon: '📈', title: '후반 살아남', who: s.revive[0], value: `${fmt1(s.revive[1])}타`, hint: '전반보다 후반에 덜 침' },
     s.birdie && { icon: '🐦', title: '버디 사냥꾼', who: s.birdie[0], value: `${s.birdie[1]}회`, hint: '버디 이상' },
-    s.doublePar && { icon: '🧅', title: '양파왕', who: s.doublePar[0], value: `${s.doublePar[1]}회`, hint: '파의 두 배 이상' },
+    s.doublePar && { icon: '🧅', title: '양파왕', who: s.doublePar[0], value: `${s.doublePar[1]}회`, hint: '파의 두 배' },
   ].filter(Boolean)
 
   if (cards.length === 0) return null
@@ -56,6 +58,7 @@ function HoleAwards({ rounds, period }) {
               <th scope="col">멤버</th>
               <th scope="col">홀</th>
               <th scope="col">파3</th>
+              <th scope="col">파4</th>
               <th scope="col">파5</th>
               <th scope="col">전후반차</th>
               <th scope="col">버디</th>
@@ -68,6 +71,7 @@ function HoleAwards({ rounds, period }) {
                 <th scope="row">{r.member}</th>
                 <td>{r.holes}</td>
                 <td>{fmt1(r.par3)}</td>
+                <td>{fmt1(r.par4)}</td>
                 <td>{fmt1(r.par5)}</td>
                 <td>{fmt1(r.collapse)}</td>
                 <td className="best">{r.birdies}</td>
@@ -148,35 +152,6 @@ export default function HallOfFame({ rounds, period, 통산 = true }) {
       )}
 
       <HoleAwards rounds={rounds} period={period} />
-
-      <div className="card fame-card">
-        <div className="fame-head">
-          <h3>⛳ 개인 기록</h3>
-          {period && <span className="hint">{period}</span>}
-        </div>
-        <div className="table-scroll">
-          <table className="data">
-            <thead>
-              <tr>
-                <th scope="col">멤버</th>
-                <th scope="col">라운드</th>
-                <th scope="col">베스트</th>
-                <th scope="col">워스트</th>
-              </tr>
-            </thead>
-            <tbody>
-              {played.map((m) => (
-                <tr key={m}>
-                  <th scope="row">{m}</th>
-                  <td>{rec[m].played}</td>
-                  <td className="best">{rec[m].best}</td>
-                  <td className="worst">{rec[m].worst}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </>
   )
 }
