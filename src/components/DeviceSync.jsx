@@ -19,9 +19,23 @@ export default function DeviceSync({ state }) {
   return (
     <p className={`sync-line ${kind}`} role="status">
       <i aria-hidden="true" />
-      {kind === 'error'
-        ? <>{글} — 이 기기에만 저장됩니다.</>
-        : <>휴대폰과 PC 가 저절로 맞춰집니다 · {글}</>}
+      <span>
+        {kind === 'error'
+          ? <>{글} — 이 기기에만 저장됩니다.</>
+          : <>휴대폰과 PC 가 저절로 맞춰집니다 · {글}</>}
+      </span>
+
+      {/*
+        **새로고침 단추.**
+
+        홈 화면에 추가해서 열면 주소창이 없어 새로고침할 자리가 사라진다.
+        맨 위에서 당기면 되기는 하는데, 표나 그래프를 굴리다 보면 그 손짓이
+        안 먹을 때가 있다. 누를 것을 하나 둔다 — 앱이 새 것으로 바뀌었을 때도
+        이것으로 받는다.
+      */}
+      <button type="button" className="sync-reload" onClick={() => location.reload()}>
+        새로고침
+      </button>
     </p>
   )
 }
