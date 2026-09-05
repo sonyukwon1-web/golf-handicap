@@ -12,6 +12,24 @@ import { loadPhotos, savePhotos } from './photos.js'
  * ══════════════════════════════════════════════════════════════════
  */
 
+/**
+ * 열었을 때 무엇을 할 것인가 — **받을까, 올릴까, 가만 둘까.**
+ *
+ * 판단을 함수 하나로 떼어 둔다. 화면 안에 있으면 눈으로 훑는 수밖에 없는데,
+ * 여기가 틀리면 한쪽 기록이 조용히 사라진다. 검사로 못박아 둘 값이다.
+ *
+ *   pull — 서버가 더 새것이다. 받아서 덮는다.
+ *   push — 서버가 비었거나 옛것인데 내게는 담긴 것이 있다.
+ *   none — 둘 다 비었거나 서버가 이미 내 것이다.
+ */
+export function decideSync(local, remote, hasPhotos = false) {
+  const 서버 = Number(remote?.updatedAt || 0)
+  const 내것 = Number(local?.updatedAt || 0)
+  if (remote && 서버 > 내것) return 'pull'
+  const 담긴것 = (local?.rounds?.length || 0) > 0 || hasPhotos
+  return 담긴것 ? 'push' : 'none'
+}
+
 /** 서버에 얹혀 있는 문서. 아직 아무도 안 올렸으면 null */
 export async function pull() {
   const r = await fetch('/api/sync')

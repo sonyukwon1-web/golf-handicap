@@ -14,7 +14,8 @@ import { roundOutcomes } from './lib/awards.js'
 import { DEFAULT_RANKING, computeStats, fmtDate } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save, normalize } from './lib/storage.js'
-import { applyPhotos, pull, push } from './lib/sync.js'
+import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
+import { loadPhotos } from './lib/photos.js'
 
 const TABS = [
   { id: 'home', label: '홈' },
@@ -37,7 +38,23 @@ export default function App() {
   const [inputMode, setInputMode] = useState('holes')
   const fileRef = useRef(null)
 
-  useEffect(() => { save(data) }, [data])
+  /*
+    ══════════════════════════════════════════════════════════
+    **고친 때를 담아 둔다 — 기기끼리 견주는 잣대다.**
+
+    담을 때 시각을 찍는다. 이것이 없으면 이 기기가 언제 것인지 알 수 없어,
+    서버 것과 견줄 방법이 없다.
+
+    **처음 한 번은 안 찍는다.** 앱을 열자마자 담기는 것은 방금 읽어 온 그
+    값이라, 그때도 찍으면 열기만 해도 이 기기가 늘 '가장 새것' 이 되어
+    서버 것을 영영 안 받는다.
+    ══════════════════════════════════════════════════════════
+  */
+  const firstSave = useRef(true)
+  useEffect(() => {
+    if (firstSave.current) { firstSave.current = false; save(data); return }
+    save({ ...data, updatedAt: Date.now() })
+  }, [data])
 
   // 탭을 바꾸면 주소에 남기고, 뒤로 가기로 돌아오면 그 탭을 연다
   useEffect(() => {
@@ -86,12 +103,26 @@ export default function App() {
     let alive = true
     ;(async () => {
       try {
+        const local = load()
         const remote = await pull()
         if (!alive) return
-        if (remote && Number(remote.updatedAt) > Number(load().updatedAt || 0)) {
+
+        /*
+          **서버가 비었거나 옛것이면 곧바로 올린다.**
+
+          여태 '무언가 바뀌면 올린다' 뿐이었다. 그런데 이미 기록이 있는 기기는
+          열어도 바뀌는 것이 없어서 **영영 안 올라갔다** — 서버는 계속 비어
+          있고, 다른 기기는 받아 올 것이 없었다. PC 에 사진이 다 있는데
+          휴대폰이 비어 있던 까닭이다.
+        */
+        const 할일 = decideSync(local, remote, Object.keys(loadPhotos()).length > 0)
+        if (할일 === 'pull') {
           applyPhotos(remote)
           setData(normalize(remote))
+        } else if (할일 === 'push') {
+          await push(local)
         }
+
         synced.current = true
         setSyncState({ kind: 'ok', at: Date.now() })
       } catch (e) {
