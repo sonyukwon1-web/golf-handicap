@@ -15,9 +15,8 @@ import { loadPhotos } from '../lib/photos.js'
  * ══════════════════════════════════════════════════════════════════
  */
 export default function Podium({ round, ranking, compact = false }) {
-  const 핸디 = ranking?.useHandicap === true
   const photos = loadPhotos()
-  const score = (e) => (핸디 ? e.net : e.gross)
+  const score = (e) => e.gross
 
   const entries = round?.entries ?? []
   if (entries.length === 0) return null

@@ -103,7 +103,7 @@ export function normalize(raw) {
     핸디가 사라지던 까닭이다. 숫자로 담긴 것만 숫자로 읽는다.
   */
   const cap = typeof r.cap === 'number' && Number.isFinite(r.cap) && r.cap > 0 ? Math.round(r.cap) : null
-  const ranking = { useHandicap: r.useHandicap === true, cap }
+  const ranking = { cap }
 
   /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
   /* 언제 고친 것인가 — 기기끼리 맞출 때 늦은 쪽이 이긴다 (lib/sync.js) */

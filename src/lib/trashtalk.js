@@ -24,11 +24,6 @@ const LINES = {
     '{n}, {v}경기 연속입니다. 클럽 탓 그만하고 연습장 갑시다.',
     '{n:을} 위한 위로의 박수 부탁드립니다. {v}경기째입니다.',
   ],
-  handicapDoom: [
-    '{n}, {v}타나 받고도 꼴찌… 괜찮아요?',
-    '{n} 핸디 {v}타는 자비였는데, 그걸 또 못 살리네요.',
-    '{n}에게 {v}타를 얹어줬는데도 결과가 이렇습니다. 더 드릴까요?',
-  ],
   rising: [
     '{n} 평균이 {v}타나 줄었습니다. 몰래 레슨 받는 거 다 압니다.',
     '{n} 요즘 폼 미쳤다. 핸디 줄어들 예정이니 지금이 전성기입니다.',
@@ -78,14 +73,7 @@ export function trashTalk(rounds, opts) {
 
     if (r.lastStreak >= 2) {
       out.push(...LINES.doom.map((l) => ({ text: fill(l, m, r.lastStreak) })))
-      /*
-        **핸디를 안 걸고 있으면 핸디 이야기를 안 한다.**
-
-        '26타나 받고도 꼴찌' 는 그 26타를 실제로 받았을 때만 성립한다. 스위치를
-        꺼 둔 상태에서는 아무도 한 타도 안 받았으니, 그 말이 앞뒤가 안 맞는다.
-      */
-      const h = stats[m].handicap
-      if (opts?.useHandicap && h > 0) out.push(...LINES.handicapDoom.map((l) => ({ text: fill(l, m, h) })))
+      /* 핸디로 순위를 가리지 않으므로 '몇 타 받고도' 라는 말은 성립하지 않는다 */
     }
 
     if (imp[m] != null && imp[m] >= 2) {

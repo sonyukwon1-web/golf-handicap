@@ -34,14 +34,16 @@ export function recentAverage(sortedRounds, member, n = RECENT_N) {
 }
 
 /**
- * 순위를 어떻게 매길지 — **화면 어디서나 같은 값을 본다.**
+ * 핸디를 어떻게 낼지 — **화면 어디서나 같은 값을 본다.**
  *
- *   useHandicap : 핸디를 적용한 넷 스코어로 매길지. **기본은 끔**이다 —
- *                 카드에 찍힌 타수가 먼저이고, 핸디는 보고 싶을 때 켜는 것이다.
- *   cap         : 핸디 상한. 스물 몇 타씩 벌어지면 그날 잘 친 사람이 아무리
- *                 쳐도 못 이기는 판이 된다. 비우면(null) 상한 없음.
+ *   cap : 핸디 상한. 스물 몇 타씩 벌어지면 봐주는 폭이 너무 커진다.
+ *         비우면(null) 상한 없음.
+ *
+ * **순위는 늘 친 타수(그로스)로 매긴다.** 한때 '핸디 적용해서 순위 보기'
+ * 스위치가 있었는데, 넷이 제 평균대로 치면 전원 동타가 되는 셈이라 순위를
+ * 가리는 데는 쓸모가 없었다. 핸디는 다음 판을 짤 때 보는 값으로만 남긴다.
  */
-export const DEFAULT_RANKING = { useHandicap: false, cap: null }
+export const DEFAULT_RANKING = { cap: null }
 
 /** 상한이 있으면 거기서 자른다 */
 function capped(handicap, cap) {
@@ -126,17 +128,15 @@ export function computeRoundDetails(rounds, opts = DEFAULT_RANKING) {
       .map((m) => {
         const gross = round.scores[m]
         /*
-         * 핸디를 끄면 **카드에 찍힌 타수 그대로** 겨룬다 (net === gross).
-         *
-         * 켜도 **기록이 두 번은 있어야** 준다. 한 번뿐이면 그 한 라운드가 곧
-         * 평균이라 핸디가 타수 차이를 그대로 상쇄해 전원 동타가 된다.
+         * **순위는 친 타수 그대로.** 핸디는 옆에 적어만 둔다 — 화면이 '이 사람
+         * 요즘 실력이 이만큼' 을 함께 보여 줄 수 있게. 순위를 가르지는 않는다.
          */
-        const handicap = opts?.useHandicap && stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
-        return { member: m, gross, handicap, net: gross - handicap }
+        const handicap = stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
+        return { member: m, gross, handicap, net: gross }
       })
       .sort((a, b) => a.net - b.net || a.gross - b.gross)
 
-    // 넷 스코어 동점은 공동 순위
+    // 같은 타수는 공동 순위
     let rank = 0
     let prevNet = null
     entries.forEach((e, idx) => {

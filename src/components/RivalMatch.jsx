@@ -5,7 +5,7 @@ import { josaWith } from '../lib/josa.js'
 import MemberAvatar from './MemberAvatar.jsx'
 import { loadPhotos } from '../lib/photos.js'
 
-/** 두 명을 골라 1:1 상대전적을 본다. 승패는 핸디를 적용한 뒤로 센다. */
+/** 두 명을 골라 1:1 상대전적을 본다. 승패는 친 타수로 센다. */
 export default function RivalMatch({ rounds, ranking }) {
   const [a, setA] = useState(MEMBERS[0])
   const [b, setB] = useState(MEMBERS[1])

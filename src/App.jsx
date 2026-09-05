@@ -230,12 +230,27 @@ export default function App() {
     }
   }
 
+  /*
+    **라운드 하나를 날짜로 골라 볼 수 있다.**
+
+    여태 '최근 라운드' 하나만 볼 수 있어, 지난 필드가 어땠는지는 라운드 탭에
+    가서 카드를 펴야 했다. 날짜를 고르면 그 날 시상대와 그 날 홀별 기록이
+    한 화면에 선다.
+  */
+  const 최신순 = sortRounds(rounds).slice().reverse()
+  const 고른라운드 = 최신순.find((r) => String(r.id) === 기간) || null
+
   const 기간라운드 = (() => {
     if (기간 === 'last5') return sortRounds(rounds).slice(-5)
     if (/^\d{4}$/.test(기간)) return rounds.filter((r) => String(r.date).startsWith(기간))
+    if (고른라운드) return [고른라운드]
     return rounds
   })()
-  const 평균순위 = 기간 === 'recent' ? null : 평균시상대(기간라운드)
+  const 평균순위 = 기간 === 'last5' || /^\d{4}$/.test(기간) ? 평균시상대(기간라운드) : null
+  /** 고른 그 라운드의 순위 (없으면 가장 최근) */
+  const 볼라운드 = 고른라운드
+    ? outcomes.find((o) => o.id === 고른라운드.id) || null
+    : latest
 
   const onExport = () => {
     if (roundCount === 0) {
@@ -336,13 +351,22 @@ export default function App() {
             </div>
             <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
 
-            {/* 어느 기간을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
+            {/* 무엇을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
             <label className="period-pick">
               <span>보기</span>
               <select value={기간} onChange={(e) => set기간(e.target.value)}>
-                <option value="recent">최근 라운드</option>
-                <option value="last5">최근 5개 라운드 평균</option>
-                {해목록.map((y) => <option key={y} value={y}>{y}년 평균</option>)}
+                <optgroup label="라운드 (날짜순)">
+                  <option value="recent">최근 라운드</option>
+                  {최신순.map((r) => (
+                    <option key={r.id} value={String(r.id)}>
+                      {fmtDate(r.date)} · {r.course || '골프장 미입력'}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="평균">
+                  <option value="last5">최근 5개 라운드</option>
+                  {해목록.map((y) => <option key={y} value={y}>{y}년</option>)}
+                </optgroup>
               </select>
             </label>
 
@@ -352,13 +376,13 @@ export default function App() {
               이 그림은 라운드를 저장한 그 순간에만 떴다. 닫고 나면 다시 볼
               방법이 없어서, 정작 자랑하고 싶을 때 꺼낼 것이 없었다.
             */}
-            {기간 === 'recent' && latest && (
+            {볼라운드 && (
               <div className="card podium-card">
                 <div className="fame-head">
-                  <h3>🏆 최근 라운드</h3>
-                  <span className="hint">{fmtDate(latest.date)} · {latest.course || '골프장 미입력'}</span>
+                  <h3>🏆 {고른라운드 ? '이 라운드' : '최근 라운드'}</h3>
+                  <span className="hint">{fmtDate(볼라운드.date)} · {볼라운드.course || '골프장 미입력'}</span>
                 </div>
-                <Podium round={latest} ranking={ranking} compact />
+                <Podium round={볼라운드} compact />
               </div>
             )}
 
@@ -369,17 +393,17 @@ export default function App() {
               통째로 다른 앱처럼 보였다. 같은 것을 재는 자리는 같은 모양이어야
               한다 — 평균으로 매긴 1·2·3위도 시상대에 올린다.
             */}
-            {기간 !== 'recent' && 평균순위 && (
+            {평균순위 && (
               <div className="card podium-card">
                 <div className="fame-head">
                   <h3>🏆 {기간 === 'last5' ? '최근 5개 라운드' : `${기간}년`} 평균</h3>
                   <span className="hint">{기간라운드.length}라운드 · 친 타수 그대로</span>
                 </div>
-                <Podium round={평균순위} ranking={{ useHandicap: false }} compact />
+                <Podium round={평균순위} compact />
               </div>
             )}
 
-            {기간 !== 'recent' && <AverageBoard rounds={기간라운드} />}
+            {평균순위 && <AverageBoard rounds={기간라운드} />}
 
             <HallOfFame rounds={기간라운드} ranking={ranking} />
             <RivalMatch rounds={기간라운드} ranking={ranking} />

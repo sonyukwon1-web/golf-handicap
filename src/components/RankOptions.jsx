@@ -1,11 +1,12 @@
 /**
- * 순위를 어떻게 매길지 — **순위가 있는 화면마다 맨 위에 선다.**
+ * 핸디 상한을 정하는 자리 — **핸디가 보이는 화면마다 맨 위에 선다.**
  *
- * 홈에만 두었더니, 랭킹이나 라운드 목록을 보다가 '이거 핸디 적용된 건가?' 를
- * 확인하려면 홈으로 돌아가야 했다. 순위를 보는 자리에 켜고 끄는 자리가 함께
- * 있어야, 바꾼 결과를 그 자리에서 본다.
+ * 한때 '핸디 적용해서 순위 보기' 스위치가 함께 있었다. 그런데 넷이 제 평균대로
+ * 치면 전원 동타가 되는 셈이라 순위를 가리는 데는 쓸모가 없었다. 순위는 늘
+ * 친 타수로 매기고, 핸디는 **다음 판을 짤 때 보는 값**으로만 남긴다.
  *
- * 담기는 값은 하나뿐이라(App 의 ranking) 어느 화면에서 켜든 전부 따라온다.
+ * 상한을 바꾸면 아래 수가 그 자리에서 따라 바뀐다 — 몇 타까지 봐줄지 눈으로
+ * 보면서 정한다.
  */
 export default function RankOptions({ ranking, onRanking, stats, members = [] }) {
   /* 기준(0)이 앞, 그 뒤로 적게 깎이는 순 — 홈 화면 핸디 목록과 같은 차례다 */
@@ -16,16 +17,6 @@ export default function RankOptions({ ranking, onRanking, stats, members = [] })
 
   return (
     <div className="rank-opts card">
-      <button
-        type="button"
-        className={`toggle ${ranking.useHandicap ? 'on' : ''}`}
-        role="switch"
-        aria-checked={ranking.useHandicap}
-        onClick={() => onRanking({ useHandicap: !ranking.useHandicap })}
-      >
-        <i aria-hidden="true" />
-        <span>핸디 적용해서 순위 보기</span>
-      </button>
 
       {/*
         **골라 넣는다.** 숫자 칸이었더니 휴대폰에서 숫자판이 떴다 닫혔다 하고,
