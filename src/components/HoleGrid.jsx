@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
-import { FRONT, HOLES, grossOf, overTotal, parTotal, verifyRow } from '../lib/holes.js'
+import { FRONT, HOLES, grossOf, overTotal, parTotal, verifyNine, verifyRow } from '../lib/holes.js'
 
 const NINES = [
   { key: 'front', label: '전반', from: 0, to: FRONT },
@@ -51,7 +51,7 @@ function Cell({ value, onChange, className, ...rest }) {
  * 스코어카드 모양의 홀별 입력 표.
  * 셀 값은 실제 타수가 아니라 파 대비 오버 타수다 (0 = 파, -1 = 버디).
  */
-export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }) {
+export default function HoleGrid({ value, onChange, claimedTotals, claimedNines, playerOrder }) {
   const { pars, overs } = value
   const [focused, setFocused] = useState(null) // { member | 'par', index }
   const refs = useRef({})
@@ -84,6 +84,25 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
 
   const verdicts = Object.fromEntries(
     members.map((m) => [m, claimedTotals?.[m] != null ? verifyRow(pars, overs[m], claimedTotals[m]) : null]),
+  )
+
+  /*
+    ══════════════════════════════════════════════════════════
+    **못 읽은 칸을 그 자리에서 빨갛게 짚는다.**
+
+    여태 '3타 차이, 인식 오류 가능성' 이라고 줄 아래에 적기만 했다. 그러면
+    열여덟 칸을 카드와 하나씩 대조해야 어디가 틀렸는지 알 수 있었다.
+
+    두 가지를 칸에 직접 표시한다 —
+      · 비어 있는 칸 : 아예 못 읽은 자리다. 진한 빨간 테.
+      · 합이 안 맞는 나인의 칸들 : 어느 칸인지는 알 수 없으니 아홉 칸을
+        옅은 빨강으로 묶어, 그 아홉만 카드와 견주면 되게 한다.
+    ══════════════════════════════════════════════════════════
+  */
+  const nine = (m, from, to) => verifyNine(
+    pars, overs[m],
+    (from === 0 ? claimedNines?.[m]?.front : claimedNines?.[m]?.back) ?? null,
+    from, to,
   )
 
   return (
@@ -136,6 +155,9 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
 
               {members.map((m) => {
                 const bad = verdicts[m]?.ok === false
+                const nv = nine(m, from, to)
+                /* 이 나인이 카드와 안 맞는가 — 아홉 칸을 통째로 짚는다 */
+                const 나인어긋남 = nv.ok === false
                 const { strokes, filled } = grossOf(pars, overs[m], from, to)
                 return (
                   <tr key={m} className={bad ? 'row-bad' : ''}>
@@ -149,7 +171,11 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                             {...cellProps(`${m}-${i}`, m, i)}
                             value={v}
                             onChange={(text) => setOver(m, i, text)}
-                            className={v < 0 ? 'under' : v >= 3 ? 'blowup' : ''}
+                            className={[
+                              v < 0 ? 'under' : v >= 3 ? 'blowup' : '',
+                              /* 못 읽은 칸이 먼저 — 어긋난 나인보다 확실한 잘못이다 */
+                              nv.blanks.includes(i) ? 'unread' : 나인어긋남 ? 'suspect' : '',
+                            ].filter(Boolean).join(' ')}
                             aria-label={`${m} ${i + 1}번 홀 오버 타수`}
                           />
                         </td>

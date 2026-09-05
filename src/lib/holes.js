@@ -47,6 +47,29 @@ export function hasHoleData(round) {
 }
 
 /** 스코어카드 검산: 파 합계 + 오버 합계 == T열 값 */
+/**
+ * 한 나인이 카드의 T 와 맞는가 — **어긋난 자리를 나인 단위로 좁힌다.**
+ *
+ * 18홀 합계만 보면 어긋났다는 것은 알아도 어디가 틀렸는지는 모른다. 전반·후반을
+ * 따로 재면 아홉 칸으로 좁혀지고, 사람은 그 아홉 칸만 카드와 견주면 된다.
+ *
+ *   { ok: true|false|null, computed, claimed, blanks: [홀 번호…] }
+ *   ok === null  → 견줄 것이 없다 (카드의 T 를 못 읽었거나 칸이 비었다)
+ */
+export function verifyNine(pars, overs, claimedTotal, from, to) {
+  const blanks = []
+  let strokes = 0
+  for (let i = from; i < to; i++) {
+    const p = num(pars?.[i])
+    const o = num(overs?.[i])
+    if (p === null || o === null) blanks.push(i)
+    else strokes += p + o
+  }
+  if (blanks.length > 0) return { ok: null, computed: null, claimed: claimedTotal ?? null, blanks }
+  if (!Number.isFinite(claimedTotal)) return { ok: null, computed: strokes, claimed: null, blanks }
+  return { ok: strokes === claimedTotal, computed: strokes, claimed: claimedTotal, blanks }
+}
+
 export function verifyRow(pars, overs, claimedTotal) {
   const computed = completeTotal(pars, overs)
   if (computed === null) return { ok: null, computed: null, claimed: claimedTotal }

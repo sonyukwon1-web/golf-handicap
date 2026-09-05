@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { HOLES } from '../lib/holes.js'
 import { nameCandidates } from '../lib/nameMatch.js'
 import { ApiUnavailable, readScorecard } from '../lib/scorecardApi.js'
-import NamePicker from './NamePicker.jsx'
+import NamePicker, { SKIP } from './NamePicker.jsx'
 
 const NINE = 9
 const sum = (a) => a.reduce((x, y) => x + (Number.isFinite(y) ? y : 0), 0)
@@ -125,14 +125,21 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
   }, [savedTick])
 
   /** 지정된 줄을 아래 표에 넣는다. 따로 누를 단계를 두지 않는다. */
+  /** 카드에 적힌 이름 → 우리 멤버. 화면에 적어 눈으로 확인하게 한다 */
+  const [mapping, setMapping] = useState([])
+
   const fill = (card, assign) => {
+    setMapping(card.rows.map((r, i) => ({ label: r.label, member: assign[i] || null })))
     const overs = {}
     const claimedTotals = {}
+    /* 나인별 T 도 함께 넘긴다 — 어긋난 자리를 아홉 칸으로 좁히려면 필요하다 */
+    const claimedNines = {}
     card.rows.forEach((r, i) => {
       const m = assign[i]
       if (!m) return
       overs[m] = r.overs.slice(0, HOLES)
       claimedTotals[m] = totalOf(r)
+      claimedNines[m] = { front: r.frontTotal ?? null, back: r.backTotal ?? null }
     })
 
     onDraft({
@@ -148,6 +155,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       pars: card.pars.slice(0, HOLES),
       overs,
       claimedTotals,
+      claimedNines,
     })
   }
 
@@ -202,6 +210,26 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       {phase === 'done' && !pending && (
         <div className="notice info" role="status">
           아래 표에 채웠습니다. 확인하고 <b>저장</b>을 눌러 주세요.
+          {/*
+            ══════════════════════════════════════════════════════════
+            **누구 줄이 누구에게 갔는지 적는다.**
+
+            줄은 카드에 적힌 차례가 아니라 **이름으로** 맞춘다(nameCandidates).
+            그런데 맞춘 결과가 화면 어디에도 없어서, '이**' 가 이지수로 들어간
+            것이 맞는지 확인할 길이 없었다 — 손님이 이철수였어도 조용히 들어간다.
+            ══════════════════════════════════════════════════════════
+          */}
+          {mapping.length > 0 && (
+            <ul className="map-result">
+              {mapping.map((r, i) => (
+                <li key={i} data-skipped={!r.member || undefined}>
+                  <span className="mr-label">{r.label || '이름 없음'}</span>
+                  <span aria-hidden="true">→</span>
+                  <span className="mr-member">{r.member || '건너뜀'}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       {pending && (
@@ -211,7 +239,8 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
           onCancel={() => setPending(null)}
           onConfirm={(picks) => {
             const next = { ...pending.assign }
-            pending.rows.forEach((row, i) => { if (picks[i]) next[row.index] = picks[i] })
+            /* '아님' 은 배정하지 않는다 — 그 줄의 타수는 버려진다 (손님이다) */
+            pending.rows.forEach((row, i) => { if (picks[i] && picks[i] !== SKIP) next[row.index] = picks[i] })
             fill(pending.card, next)
             setPending(null)
           }}

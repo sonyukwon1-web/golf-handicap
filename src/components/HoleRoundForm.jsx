@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
-import { HOLES, completeTotal, emptyOvers, emptyPars, grossOf } from '../lib/holes.js'
+import { FRONT, HOLES, completeTotal, emptyOvers, emptyPars, grossOf, verifyNine } from '../lib/holes.js'
 import { fmtDate } from '../lib/handicap.js'
 import { newId } from '../lib/storage.js'
 import HoleGrid from './HoleGrid.jsx'
 import ScorecardImport from './ScorecardImport.jsx'
+import ReadCheck from './ReadCheck.jsx'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -23,6 +24,10 @@ const blank = () => ({
 export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
   const [draft, setDraft] = useState(blank)
   const [claimedTotals, setClaimedTotals] = useState({})
+  /** 카드가 적어 둔 나인별 T — 어긋난 자리를 아홉 칸으로 좁힐 때 쓴다 */
+  const [claimedNines, setClaimedNines] = useState({})
+  /** 읽고 나서 짚어 줄 것들. 비면 알림을 안 띄운다 */
+  const [readCheck, setReadCheck] = useState([])
   const [error, setError] = useState('')
   const [savedTick, setSavedTick] = useState(0)
   /** 카드에서 날짜를 못 읽었다 — 사람이 골라야 한다 */
@@ -34,7 +39,7 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
     if ('date' in patch) setDateUnread(false)
   }
 
-  const applyOcr = ({ meta, pars, overs, order, claimedTotals: claimed }) => {
+  const applyOcr = ({ meta, pars, overs, order, claimedTotals: claimed, claimedNines: nines }) => {
     /*
       ══════════════════════════════════════════════════════════
       **못 읽은 날짜를 오늘로 슬쩍 채우지 않는다.**
@@ -64,6 +69,41 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
       ),
     }))
     setClaimedTotals(claimed || {})
+    setClaimedNines(nines || {})
+
+    /*
+      ══════════════════════════════════════════════════════════
+      **읽자마자 가로막고 짚는다.**
+
+      표에 채워 놓고 '확인하고 저장하세요' 라고만 두었더니 열여덟 칸이 다
+      그럴듯해 보여 그냥 저장했다. 못 읽은 칸도, 카드의 T 와 합이 안 맞는
+      나인도 표 아래 작은 글씨에만 있었다.
+
+      나인 단위로 본다 — 어느 칸이 틀렸는지는 알 수 없지만 아홉 칸으로는
+      좁혀지고, 사람은 그 아홉만 카드와 견주면 된다.
+      ══════════════════════════════════════════════════════════
+    */
+    const 짚을것 = []
+    for (const m of MEMBERS) {
+      const row = overs[m]
+      if (!row) continue
+      for (const [label, from, to] of [['전반', 0, FRONT], ['후반', FRONT, HOLES]]) {
+        const claimedNine = (from === 0 ? nines?.[m]?.front : nines?.[m]?.back) ?? null
+        const v = verifyNine(pars, row, claimedNine, from, to)
+        if (v.blanks.length > 0) {
+          짚을것.push({
+            member: m, nine: label,
+            text: `${v.blanks.map((i) => `${i + 1}번`).join('·')} 홀을 못 읽었습니다`,
+          })
+        } else if (v.ok === false) {
+          짚을것.push({
+            member: m, nine: label,
+            text: `카드의 T는 ${v.claimed} 인데 읽은 값을 더하면 ${v.computed} 입니다`,
+          })
+        }
+      }
+    }
+    setReadCheck(짚을것)
     setError('')
   }
 
@@ -125,6 +165,8 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
 
     setDraft(blank())
     setClaimedTotals({})
+    setClaimedNines({})
+    setReadCheck([])
     setError('')
     setDateUnread(false)
     setSavedTick((n) => n + 1) // 대기 중인 다음 스코어카드가 있으면 이어서 읽는다
@@ -133,6 +175,7 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
   return (
     <form onSubmit={submit} noValidate>
       <ScorecardImport onDraft={applyOcr} savedTick={savedTick} stats={stats} />
+      <ReadCheck items={readCheck} onClose={() => setReadCheck([])} />
 
       {error && <div className="notice error" role="alert">{error}</div>}
 
@@ -178,6 +221,7 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
           value={{ pars: draft.pars, overs: draft.overs }}
           onChange={({ pars, overs }) => { setDraft((d) => ({ ...d, pars, overs })); setError('') }}
           claimedTotals={claimedTotals}
+          claimedNines={claimedNines}
         />
       </div>
 

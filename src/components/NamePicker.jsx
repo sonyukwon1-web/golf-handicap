@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { josaWith } from '../lib/josa.js'
 
 const NINE = 9
+/** '이 줄은 우리 멤버가 아니다' 를 고른 상태 (빈 값과 구분해야 '다 골랐다' 를 안다) */
+export const SKIP = '건너뛰기'
 
 /** 한 나인의 오버 합계 — 못 읽은 칸은 0으로 본다 */
 const overOf = (arr) => arr.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0)
@@ -28,19 +30,22 @@ export default function NamePicker({ rows, card, onConfirm, onCancel }) {
   /** 두 줄에 같은 사람을 넣을 수 없다. 하나를 고르면 나머지는 저절로 정해진다. */
   const choose = (index, member) =>
     setPicks((prev) => {
-      const next = prev.map((p) => (p === member ? '' : p))
+      const next = prev.map((p) => (p === member && member !== SKIP ? '' : p))
       next[index] = member
 
+      /* 건너뛰기는 짝을 정해 주지 않는다 — 남은 한 줄이 누구인지는 여전히 모른다 */
       const pair = rows[index].candidates
-      if (rows.length === 2 && pair.length === 2) {
+      if (member !== SKIP && rows.length === 2 && pair.length === 2) {
         const other = index === 0 ? 1 : 0
-        next[other] = pair.find((m) => m !== member) || ''
+        if (next[other] !== SKIP) next[other] = pair.find((m) => m !== member) || ''
       }
       return next
     })
 
   const tied = rows.length === 2 && rows[0].total === rows[1].total
-  const ready = picks.every(Boolean) && new Set(picks).size === picks.length
+  /* 건너뛴 줄은 여럿이어도 된다 — 손님이 둘일 수 있다 */
+  const 고른사람 = picks.filter((p) => p && p !== SKIP)
+  const ready = picks.every(Boolean) && new Set(고른사람).size === 고른사람.length
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
@@ -95,6 +100,18 @@ export default function NamePicker({ rows, card, onConfirm, onCancel }) {
                     {m}
                   </button>
                 ))}
+                {/*
+                  **우리 멤버가 아닐 수도 있다.** 손님과 함께 친 카드에서 '최**' 가
+                  최민수일 수 있는데, 고를 것이 최진규·최문창뿐이면 둘 중 하나를
+                  억지로 눌러야 했다. 그러면 남의 타수가 우리 기록에 들어앉는다.
+                */}
+                <button
+                  type="button"
+                  aria-pressed={picks[i] === SKIP}
+                  onClick={() => choose(i, picks[i] === SKIP ? '' : SKIP)}
+                >
+                  아님
+                </button>
               </div>
             </div>
 
