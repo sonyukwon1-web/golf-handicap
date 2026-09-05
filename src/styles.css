@@ -694,6 +694,21 @@ table.data tbody tr:last-child th { border-bottom: 0; }
 .round-head:hover { background: var(--surface-2); }
 
 .round-date { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 몇 번째 필드인지 — 날짜 앞의 작은 번호표 */
+.round-no {
+  display: inline-block;
+  min-width: 18px;
+  margin-right: 7px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-3);
+  font: 700 11px Oswald, sans-serif;
+  font-style: normal;
+  text-align: center;
+  vertical-align: 2px;
+}
 .round-course { font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
 
 .round-winner {
@@ -1112,7 +1127,13 @@ table.data tbody tr:last-child th { border-bottom: 0; }
 }
 .tt-more:hover { background: var(--surface-2); color: var(--green); }
 
-/* 개인 베스트 — 이름 아래 언제 어디서였는지, 오른쪽에 타수 */
+/*
+  개인 베스트 — 이름 아래 언제 어디서였는지, 오른쪽에 타수.
+
+  바로 밑 라운드 카드와 맞닿아 있어 두 상자가 한 덩어리처럼 보였다. 성격이
+  다른 것(통산 기록 / 라운드 목록)이므로 사이를 벌려 갈라 놓는다.
+*/
+.best-card { margin-bottom: 18px; }
 .best-list { list-style: none; margin: 0; padding: 4px 0; }
 .best-list li {
   display: flex;

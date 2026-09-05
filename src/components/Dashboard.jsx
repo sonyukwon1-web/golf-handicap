@@ -98,7 +98,7 @@ function HandicapRow({ s, slot, badges, photos }) {
   )
 }
 
-export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync }) {
+export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync, 번호 }) {
   const photos = loadPhotos()
   const { stats } = computeStats(rounds, ranking)
   const badges = computeBadges(rounds, ranking)
@@ -166,7 +166,7 @@ export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync 
             <h2>평균 타수 추이</h2>
             <span className="hint">최근 5경기 평균</span>
           </div>
-          <TrendChart rounds={rounds} />
+          <TrendChart rounds={rounds} 번호={번호} />
         </section>
       )}
 

@@ -16,7 +16,7 @@ import { loadPhotos } from '../lib/photos.js'
   **워스트는 뺐다.** 자랑할 자리에 굳이 못 친 날을 나란히 적을 까닭이 없다.
   ══════════════════════════════════════════════════════════════════
 */
-export default function PersonalBest({ rounds }) {
+export default function PersonalBest({ rounds, 번호 }) {
   const photos = loadPhotos()
   const 정렬 = sortRounds(rounds)
 
@@ -38,7 +38,7 @@ export default function PersonalBest({ rounds }) {
   if (줄.length === 0) return null
 
   return (
-    <div className="card fame-card">
+    <div className="card fame-card best-card">
       <div className="fame-head">
         <h3>🏅 개인 베스트</h3>
         <span className="hint">전체 라운드</span>
@@ -50,7 +50,10 @@ export default function PersonalBest({ rounds }) {
             <span className="best-who">
               <b>{r.member}</b>
               {/* 언제 어디서 친 것인지 — 숫자만 있으면 자랑이 안 된다 */}
-              <em>{fmtDate(r.round.date)} · {r.round.course || '골프장 미입력'}</em>
+              <em>
+                {번호?.get(r.round.id) ? `${번호.get(r.round.id)}번째 · ` : ''}
+                {fmtDate(r.round.date)} · {r.round.course || '골프장 미입력'}
+              </em>
             </span>
             <span className="best-num">{r.gross}</span>
           </li>

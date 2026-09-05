@@ -15,8 +15,14 @@ import { MEMBER_COLORS, fmtAvg, fmtDateShort, sortRounds, trendSeries } from '..
     PAD.left  굴림 상자 안, 가로줄이 시작하기 전의 숨 돌릴 자리
   ══════════════════════════════════════════════════════════════════
 */
-const AXIS = 32
-const PAD = { top: 14, right: 56, bottom: 50, left: 4 }
+/*
+  PAD.left 를 4 로 줄였더니 **첫 라운드의 골프장 이름이 왼쪽으로 잘렸다** —
+  이름표는 점을 가운데 두고 좌우로 퍼지는데, 첫 점이 그림 맨 왼쪽에 붙어
+  있으면 왼쪽 절반이 그림 밖으로 나간다. 이름 한 줄은 일곱 자까지 오므로
+  (courseLines) 그 절반이 들어갈 만큼 둔다.
+*/
+const AXIS = 30
+const PAD = { top: 14, right: 56, bottom: 50, left: 34 }
 const HEIGHT = 244
 
 /**
@@ -76,7 +82,7 @@ function spread(labels, min, lo, hi) {
   return sorted
 }
 
-export default function TrendChart({ rounds }) {
+export default function TrendChart({ rounds, 번호 }) {
   const [wrapRef, width] = useWidth()
   const color = useSeriesColors()
   const [hover, setHover] = useState(null)
@@ -264,7 +270,8 @@ export default function TrendChart({ rounds }) {
           {xLabels.map((i) => (
             <text key={i} x={xOf(i + 1)} textAnchor="middle" fill="var(--ink-3)">
               <tspan x={xOf(i + 1)} y={HEIGHT - 34} fontSize="10.5">
-                {fmtDateShort(sorted[i].date)}
+                {/* 몇 번째로 친 필드인지 — 날짜 앞에 붙인다 */}
+                {번호?.get(sorted[i].id) ? `${번호.get(sorted[i].id)}. ` : ''}{fmtDateShort(sorted[i].date)}
               </tspan>
               {courseLines(sorted[i].course).map((line, k) => (
                 <tspan key={k} x={xOf(i + 1)} y={HEIGHT - 21 + k * 11} fontSize="9.5">

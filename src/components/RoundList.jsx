@@ -150,7 +150,7 @@ function RoundEditor({ round, onSave, onCancel }) {
   )
 }
 
-export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
+export default function RoundList({ rounds, 번호, onUpdate, onDelete, limit }) {
   const [openId, setOpenId] = useState(null)
   const [editId, setEditId] = useState(null)
 
@@ -182,7 +182,11 @@ export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
               aria-expanded={open}
             >
               <span>
-                <span className="round-date">{fmtDate(r.date)}</span>
+                <span className="round-date">
+                  {/* 몇 번째로 친 필드인지 — 가장 오래된 것이 1번 */}
+                  {번호?.get(r.id) && <i className="round-no">{번호.get(r.id)}</i>}
+                  {fmtDate(r.date)}
+                </span>
                 <span className="round-course" style={{ display: 'block' }}>
                   {r.course || '골프장 미입력'}
                   {r.courseFront && ` · ${r.courseFront}${r.courseBack ? `-${r.courseBack}` : ''}`}

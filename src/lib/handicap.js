@@ -21,6 +21,22 @@ export function sortRounds(rounds) {
   })
 }
 
+/**
+ * 라운드마다 **몇 번째로 친 필드인지** 번호를 매긴다 — 가장 오래된 것이 1번.
+ *
+ * 날짜만 적혀 있으면 '이게 몇 번째였더라' 를 세어 봐야 알았다. 번호는 늘
+ * **전체 라운드**를 기준으로 매긴다 — 화면에서 한 해만 걸러 보더라도
+ * 3번은 3번이어야 한다. 걸러진 목록으로 다시 매기면 같은 라운드가 화면마다
+ * 다른 번호를 달게 된다.
+ *
+ *   Map(라운드 id → 번호)
+ */
+export function roundNumbers(rounds) {
+  const map = new Map()
+  sortRounds(rounds).forEach((r, i) => map.set(r.id, i + 1))
+  return map
+}
+
 /** 해당 멤버가 실제로 친 스코어만 시간순으로 */
 export function scoresOf(sortedRounds, member) {
   return sortedRounds.map((r) => r.scores?.[member]).filter(isScore)

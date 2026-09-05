@@ -11,7 +11,7 @@ import PersonalBest from './components/PersonalBest.jsx'
 import RoundList from './components/RoundList.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, scoresOf, sortRounds } from './lib/handicap.js'
+import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, roundNumbers, scoresOf, sortRounds } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { load, save, normalize } from './lib/storage.js'
 import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
@@ -246,6 +246,8 @@ export default function App() {
     가서 카드를 펴야 했다. 날짜를 고르면 그 날 시상대와 그 날 홀별 기록이
     한 화면에 선다.
   */
+  /* 몇 번째로 친 필드인가 — 늘 전체 라운드로 매긴다 (걸러 봐도 번호는 그대로) */
+  const 번호 = roundNumbers(rounds)
   const 최신순 = sortRounds(rounds).slice().reverse()
   /** 고르지 않았으면 가장 최근 라운드 (없으면 최근 5개 평균) */
   const 본기간 = 기간 ?? (최신순[0] ? String(최신순[0].id) : 'last5')
@@ -282,7 +284,7 @@ export default function App() {
   const 기간이름 = 평균보기
     ? (본기간 === 'last5' ? '최근 5개 라운드 평균' : `${본기간}년 평균`)
     : 고른라운드
-      ? `${fmtDate(고른라운드.date)} · ${고른라운드.course || '골프장 미입력'}`
+      ? `${번호.get(고른라운드.id)}번째 · ${fmtDate(고른라운드.date)} · ${고른라운드.course || '골프장 미입력'}`
       : '전체'
 
   return (
@@ -335,6 +337,7 @@ export default function App() {
             rounds={rounds}
             ranking={ranking}
             onRanking={setRanking}
+            번호={번호}
             onGoInput={() => setTab('input')}
             sync={<DeviceSync state={syncState} />}
           />
@@ -348,8 +351,8 @@ export default function App() {
             </div>
             {/* 핸디 상한은 홈 한 곳에서만 정한다 — 같은 상자가 세 화면에 있으면
                 어디서 고쳐야 하는지 헷갈리고, 정작 볼 것을 아래로 밀어낸다 */}
-            <PersonalBest rounds={rounds} />
-            <RoundList rounds={rounds} onUpdate={updateRound} onDelete={deleteRound} />
+            <PersonalBest rounds={rounds} 번호={번호} />
+            <RoundList rounds={rounds} 번호={번호} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
 
@@ -375,7 +378,7 @@ export default function App() {
                 <optgroup label="라운드 (날짜순)">
                   {최신순.map((r) => (
                     <option key={r.id} value={String(r.id)}>
-                      {fmtDate(r.date)} · {r.course || '골프장 미입력'}
+                      {번호.get(r.id)}. {fmtDate(r.date)} · {r.course || '골프장 미입력'}
                     </option>
                   ))}
                 </optgroup>
@@ -392,7 +395,7 @@ export default function App() {
               <div className="card podium-card">
                 <div className="fame-head">
                   <h3>🏆 {볼라운드.course || '이 라운드'}</h3>
-                  <span className="hint">{fmtDate(볼라운드.date)}</span>
+                  <span className="hint">{번호.get(볼라운드.id)}번째 · {fmtDate(볼라운드.date)}</span>
                 </div>
                 <Podium round={볼라운드} compact />
               </div>
