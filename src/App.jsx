@@ -4,12 +4,13 @@ import HallOfFame from './components/HallOfFame.jsx'
 import HoleRoundForm from './components/HoleRoundForm.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
+import Podium from './components/Podium.jsx'
 import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { DEFAULT_RANKING, computeStats } from './lib/handicap.js'
+import { DEFAULT_RANKING, computeStats, fmtDate } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
@@ -98,6 +99,8 @@ export default function App() {
   const { stats } = computeStats(rounds, ranking)
   /** 방금 저장한 라운드 (저장 직후 우승자를 띄운다) */
   const celebrating = celebrateId ? outcomes.find((o) => o.id === celebrateId) : null
+  /** 가장 최근 라운드 — 랭킹 화면 맨 위 시상대가 본다 (outcomes 는 날짜 오름차순) */
+  const latest = outcomes.length ? outcomes[outcomes.length - 1] : null
 
   const onExport = () => {
     if (roundCount === 0) {
@@ -198,6 +201,26 @@ export default function App() {
               <span className="hint">{roundCount}라운드 누적</span>
             </div>
             <RankOptions ranking={ranking} onRanking={setRanking} />
+
+            {/*
+              ══════════════════════════════════════════════════════════
+              **가장 최근 라운드의 시상대를 맨 위에.**
+
+              이 그림은 라운드를 저장한 그 순간에만 떴다. 닫고 나면 다시 볼
+              방법이 없어서, 정작 자랑하고 싶을 때 꺼낼 것이 없었다.
+              순위를 보러 오는 자리에 두면 늘 볼 수 있다.
+              ══════════════════════════════════════════════════════════
+            */}
+            {latest && (
+              <div className="card podium-card">
+                <div className="fame-head">
+                  <h3>🏆 최근 라운드</h3>
+                  <span className="hint">{fmtDate(latest.date)} · {latest.course || '골프장 미입력'}</span>
+                </div>
+                <Podium round={latest} ranking={ranking} compact />
+              </div>
+            )}
+
             <HallOfFame rounds={rounds} ranking={ranking} />
             <SeasonRanking rounds={rounds} ranking={ranking} />
             <RivalMatch rounds={rounds} ranking={ranking} />
