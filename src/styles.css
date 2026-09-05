@@ -1331,3 +1331,9 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 
 .pick-row table.map-card { margin-top: 8px; }
 .pick-row table.map-card .t { background: transparent; }
+
+/* 파일 입력이 키보드로 잡혔을 때도 보이게 */
+input#scorecard-file:focus-visible + .dropzone {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}

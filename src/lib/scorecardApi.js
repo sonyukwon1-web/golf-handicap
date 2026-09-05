@@ -8,21 +8,34 @@ class ApiUnavailable extends Error {}
 export { ApiUnavailable }
 
 async function loadImage(file) {
+  // 휴대폰 사진에는 회전 정보(EXIF)가 붙는다. from-image 를 주지 않으면 눕혀진 채로 들어와
+  // 표를 못 읽는다. <img> 경로는 브라우저가 알아서 회전해 준다.
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    /* 이 옵션을 모르는 브라우저이거나, HEIC 처럼 못 여는 형식 */
+  }
   try {
     return await createImageBitmap(file)
   } catch {
-    // 사파리의 HEIC 처럼 createImageBitmap 이 못 여는 형식
-    const url = URL.createObjectURL(file)
-    try {
-      return await new Promise((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => resolve(img)
-        img.onerror = () => reject(new Error('이 형식의 이미지는 열 수 없습니다 (JPG 또는 PNG로 저장해 주세요)'))
-        img.src = url
-      })
-    } finally {
-      setTimeout(() => URL.revokeObjectURL(url), 10000)
-    }
+    /* <img> 로 다시 시도한다 */
+  }
+
+  const url = URL.createObjectURL(file)
+  try {
+    return await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.decoding = 'sync'
+      img.onload = () => resolve(img)
+      img.onerror = () =>
+        reject(new Error(
+          '이 사진을 열 수 없습니다. 아이폰이라면 설정 > 카메라 > 포맷을 "높은 호환성"으로 바꾸거나, ' +
+          '사진을 캡처(스크린샷)해서 올려 주세요.',
+        ))
+      img.src = url
+    })
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 }
 

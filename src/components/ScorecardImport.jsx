@@ -158,28 +158,16 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         <span className="hint">읽은 값은 아래 표에서 고칠 수 있어요</span>
       </div>
 
-      <div
-        className={`dropzone ${dragging ? 'over' : ''} ${busy ? 'busy' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); if (!busy) setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); if (!busy) accept(e.dataTransfer.files) }}
-        onClick={() => !busy && fileRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
-        aria-label="스코어카드 사진 선택 또는 끌어다 놓기"
-      >
-        <span className="dz-icon" aria-hidden="true">📷</span>
-        <b>{busy ? '읽는 중…' : '사진을 끌어다 놓거나 눌러서 선택'}</b>
-        <span className="dz-hint">여러 장을 한 번에 올리면 한 장씩 차례로 읽습니다</span>
-      </div>
+      {/* 아이폰 사파리는 숨은 file input 을 코드로 누르는 것을 막을 때가 있다.
+          <label> 로 묶으면 브라우저가 스스로 사진첩을 연다. */}
       <input
         ref={fileRef}
+        id="scorecard-file"
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,.jpg,.jpeg,.png"
         multiple
         className="sr-only"
-        aria-label="스코어카드 사진 선택"
+        disabled={busy}
         onChange={(e) => {
           // FileList 는 살아있는 참조라, value 를 비우면 같이 비어버린다. 먼저 복사한다.
           const files = [...(e.target.files || [])]
@@ -187,6 +175,17 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
           accept(files)
         }}
       />
+      <label
+        htmlFor="scorecard-file"
+        className={`dropzone ${dragging ? 'over' : ''} ${busy ? 'busy' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); if (!busy) setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); if (!busy) accept(e.dataTransfer.files) }}
+      >
+        <span className="dz-icon" aria-hidden="true">📷</span>
+        <b>{busy ? '읽는 중…' : '사진을 끌어다 놓거나 눌러서 선택'}</b>
+        <span className="dz-hint">여러 장을 한 번에 올리면 한 장씩 차례로 읽습니다</span>
+      </label>
 
       {queued && queued.total > 1 && (
         <p className="queue-note">
