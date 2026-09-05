@@ -36,14 +36,25 @@ export function removePhoto(member) {
   return next
 }
 
-/** 파일을 <img> 로 읽는다. 자르기 전에 크기를 알아야 미리보기를 그릴 수 있다 */
+/**
+ * 파일을 <img> 로 읽는다. 자르기 전에 크기를 알아야 미리보기를 그릴 수 있다.
+ *
+ * **objectURL 이 아니라 data URL 로 읽는다.** objectURL 은 다 쓰면 되돌려
+ * 줘야(revoke) 하는데, 되돌리는 순간 그 주소는 죽는다. 캔버스에 한 번 그리고
+ * 마는 때는 괜찮았지만 미리보기 <img> 는 그 주소를 계속 들고 있어야 해서,
+ * 되돌리자마자 동그라미가 텅 비었다. 안 되돌려도 되는 값으로 읽는다.
+ */
 export function loadImage(file) {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('이미지를 읽지 못했습니다.')) }
-    img.src = url
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('이미지를 읽지 못했습니다.'))
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
   })
 }
 
