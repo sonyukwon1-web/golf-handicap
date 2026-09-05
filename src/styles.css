@@ -507,7 +507,16 @@ main.shell { padding-top: 20px; }
 }
 
 /* ── 핸디 목록 ────────────────────────────────────────── */
-.hdcp-list { list-style: none; margin: 0; padding: 4px 0; }
+.hdcp-card { padding: 12px 0 4px; }
+.hdcp-cap {
+  display: block;
+  padding: 0 14px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+}
+.hdcp-list { list-style: none; margin: 0; padding: 0; }
 
 .hd-row {
   display: grid;

@@ -311,8 +311,6 @@ export default function App() {
             rounds={rounds}
             ranking={ranking}
             onRanking={setRanking}
-            onUpdate={updateRound}
-            onDelete={deleteRound}
             onGoInput={() => setTab('input')}
             sync={<DeviceSync state={syncState} />}
           />

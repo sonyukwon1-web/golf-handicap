@@ -1,7 +1,6 @@
 import { MEMBERS, computeStats, fmtAvg } from '../lib/handicap.js'
 import { badges as computeBadges } from '../lib/awards.js'
 import TrendChart from './TrendChart.jsx'
-import RoundList from './RoundList.jsx'
 import TrashTalk from './TrashTalk.jsx'
 import MemberAvatar from './MemberAvatar.jsx'
 import PhotoPicker from './PhotoPicker.jsx'
@@ -75,7 +74,7 @@ function HandicapRow({ s, slot, badges, photos }) {
   )
 }
 
-export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDelete, onGoInput, sync }) {
+export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync }) {
   const photos = loadPhotos()
   const { stats } = computeStats(rounds, ranking)
   const badges = computeBadges(rounds, ranking)
@@ -118,14 +117,23 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
           색(slot)은 **정해 둔 차례**를 그대로 따른다 — 줄이 움직인다고 사람의
           색까지 바뀌면 그래프의 선 색과 어긋난다.
         */}
-        <ul className="card hdcp-list">
+        {/*
+          **무엇을 재고 있는지 상자 안에 적는다.**
+
+          구역 제목은 '핸디캡' 인데 줄마다 큰 수는 핸디, 작은 수는 평균이라
+          어느 쪽을 보는 상자인지 헷갈렸다. 재료가 무엇인지 맨 위에 적어 둔다.
+        */}
+        <div className="card hdcp-card">
+          <strong className="hdcp-cap">최근 5라운드 평균점수</strong>
+          <ul className="hdcp-list">
           {MEMBERS
             .map((m, i) => ({ m, slot: i + 1 }))
             .sort((a, b) => (stats[a.m].handicap ?? 99) - (stats[b.m].handicap ?? 99))
             .map(({ m, slot }) => (
               <HandicapRow key={m} s={stats[m]} slot={slot} badges={badges[m]} photos={photos} />
-            ))}
-        </ul>
+              ))}
+          </ul>
+        </div>
       </section>
 
       {rounds.length > 0 && (
@@ -138,12 +146,18 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
         </section>
       )}
 
-      <section className="section">
-        <div className="section-head">
-          <h2>최근 라운드</h2>
-          {rounds.length > 0 && <span className="hint">눌러서 순위 보기</span>}
-        </div>
-        {rounds.length === 0 ? (
+      {/*
+        **최근 라운드 목록은 여기 없다.**
+
+        랭킹 탭 맨 위에 같은 라운드가 시상대로 서 있고, 라운드 탭에는 전체가
+        있다. 같은 것을 세 자리에서 보여 주면 홈이 길어지기만 하고, 어느
+        자리가 진짜인지도 흐려진다. 홈은 **핸디와 추이**만 말한다.
+
+        기록이 하나도 없을 때만 남긴다 — 그때는 어디로 가야 하는지 알려 줄
+        자리가 필요하다.
+      */}
+      {rounds.length === 0 && (
+        <section className="section">
           <div className="card empty">
             <strong>아직 기록이 없습니다</strong>
             첫 라운드를 입력하면 핸디캡이 자동으로 계산됩니다.
@@ -151,10 +165,8 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
               <button className="btn primary" onClick={onGoInput}>라운드 입력하기</button>
             </div>
           </div>
-        ) : (
-          <RoundList rounds={rounds} ranking={ranking} onUpdate={onUpdate} onDelete={onDelete} limit={5} />
-        )}
-      </section>
+        </section>
+      )}
 
       {/* 사진은 이 자리에서 등록한다 — 등록하면 이름 나오는 모든 자리가 얼굴로 바뀐다 */}
       <PhotoPicker />

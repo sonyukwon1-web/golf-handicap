@@ -92,7 +92,7 @@ export default function TrendChart({ rounds }) {
     보장하고, 넘치면 그래프를 가로로 늘려 굴려 보게 한다.
     ══════════════════════════════════════════════════════════
   */
-  const PER_ROUND = 70
+  const PER_ROUND = 78
   const w = Math.max(width, 280, PAD.left + PAD.right + Math.max(0, n - 1) * PER_ROUND)
   const innerW = Math.max(1, w - PAD.left - PAD.right)
   const innerH = HEIGHT - PAD.top - PAD.bottom
@@ -121,12 +121,19 @@ export default function TrendChart({ rounds }) {
   for (let v = tickFrom; v <= yMax; v += TICK) ticks.push(v)
 
   // x축 라벨은 좁은 화면에서 겹치지 않게 솎아낸다
-  /* 날짜 밑에 골프장이 붙어 라벨이 넓어졌다 — 그만큼 사이를 벌려 솎는다 */
-  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(innerW / 64))))
-  const xLabels = sorted
-    .map((r, i) => i)
-    .filter((i) => i % step === 0 || i === n - 1)
-    .filter((i, _, all) => i === n - 1 || xOf(n) - xOf(i + 1) > 50 || all.length === 1)
+  /*
+    ══════════════════════════════════════════════════════════
+    **모든 라운드에 날짜와 골프장을 적는다.**
+
+    화면 폭에 맞춰 밀어 넣던 때는 라벨이 겹쳐서 몇 개씩 솎아 냈다. 그러면
+    가운데 라운드들이 언제 어디서 친 것인지 알 길이 없었다 — 점은 있는데
+    이름이 없는 셈이다.
+
+    이제 한 라운드에 78px 을 보장하고 넘치면 가로로 굴리므로, 솎을 까닭이
+    없다. 자리는 늘 있다.
+    ══════════════════════════════════════════════════════════
+  */
+  const xLabels = sorted.map((_, i) => i)
 
   const endLabels = spread(
     series.map((s) => {
