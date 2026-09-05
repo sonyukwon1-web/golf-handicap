@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { MEMBERS, fmtDate } from '../lib/handicap.js'
 import { headToHead } from '../lib/awards.js'
+import { josaWith } from '../lib/josa.js'
 
-/** 두 명을 골라 1:1 상대전적을 본다. 승패는 넷 스코어 기준. */
+/** 두 명을 골라 1:1 상대전적을 본다. 승패는 핸디를 적용한 뒤로 센다. */
 export default function RivalMatch({ rounds }) {
   const [a, setA] = useState(MEMBERS[0])
   const [b, setB] = useState(MEMBERS[1])
@@ -24,7 +25,7 @@ export default function RivalMatch({ rounds }) {
     <div className="card rival-card">
       <div className="fame-head">
         <h3>⚔️ 라이벌 매치</h3>
-        <span className="hint">넷 스코어 기준</span>
+        <span className="hint">핸디 적용 후</span>
       </div>
 
       <div className="rival-pick">
@@ -63,7 +64,7 @@ export default function RivalMatch({ rounds }) {
             <b>
               {h.avgGrossGap === 0
                 ? '없음'
-                : `${h.avgGrossGap < 0 ? a : b}가 ${Math.abs(h.avgGrossGap).toFixed(1)}타 낮음`}
+                : `${josaWith(h.avgGrossGap < 0 ? a : b, '이/가')} ${Math.abs(h.avgGrossGap).toFixed(1)}타 낮음`}
             </b>
           </p>
 
@@ -81,7 +82,15 @@ export default function RivalMatch({ rounds }) {
               <tbody>
                 {h.history.map((r) => (
                   <tr key={r.id}>
-                    <th scope="row">{fmtDate(r.date)}</th>
+                    {/*
+                      골프장은 **날짜 밑에 붙인다.** 열을 하나 더 세우면 휴대폰에서
+                      표가 옆으로 밀려 승자 칸이 화면 밖으로 나간다. 어느 날 어디서
+                      쳤는지는 한 덩어리로 읽히는 것이 자연스럽기도 하다.
+                    */}
+                    <th scope="row">
+                      {fmtDate(r.date)}
+                      {r.course ? <small className="rival-course">{r.course}</small> : null}
+                    </th>
                     <td>{r.a.gross} <small>({r.a.net})</small></td>
                     <td>{r.b.gross} <small>({r.b.net})</small></td>
                     <td>{r.winner || '무승부'}</td>

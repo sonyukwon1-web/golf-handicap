@@ -2,6 +2,9 @@
 
 import { MEMBERS, computeStats } from './handicap.js'
 import { improvements, memberRecords } from './awards.js'
+import { josaWith } from './josa.js'
+
+const PAIR = { 이: '이/가', 은: '은/는', 을: '을/를', 과: '과/와' }
 
 const pick = (arr) => arr.map((text) => ({ text }))
 
@@ -52,17 +55,9 @@ const LINES = {
   ],
 }
 
-/** 받침이 있으면 앞 조사(이/은/을/과), 없으면 뒤 조사(가/는/를/와)를 쓴다 */
-const hasFinalConsonant = (word) => {
-  const code = word.charCodeAt(word.length - 1) - 0xac00
-  return code >= 0 && code <= 11171 && code % 28 !== 0
-}
-
-const JOSA = { 이: ['이', '가'], 은: ['은', '는'], 을: ['을', '를'], 과: ['과', '와'] }
-
 const fill = (line, name, value) =>
   line
-    .replace(/\{n:([이은을과])\}/g, (_, j) => name + JOSA[j][hasFinalConsonant(name) ? 0 : 1])
+    .replace(/\{n:([이은을과])\}/g, (_, j) => josaWith(name, PAIR[j]))
     .replace('{n}', name)
     .replace('{v}', value)
 

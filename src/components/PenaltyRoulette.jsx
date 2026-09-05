@@ -73,7 +73,7 @@ export default function PenaltyRoulette({ losers, penalties, onChangePenalties, 
         </h2>
         <p className="modal-desc">
           {stage === 'loser' ? (
-            <>넷 스코어 공동 꼴찌 <b>{losers.join(' · ')}</b>. 한 명을 가려 봅시다.</>
+            <>공동 꼴찌 <b>{losers.join(' · ')}</b>. 한 명을 가려 봅시다.</>
           ) : (
             <>오늘의 꼴찌는 <b>{finalLoser}</b>. 벌칙을 뽑아 봅시다.</>
           )}

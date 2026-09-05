@@ -207,6 +207,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
       {pending && (
         <NamePicker
           rows={pending.rows}
+          card={pending.card}
           onCancel={() => setPending(null)}
           onConfirm={(picks) => {
             const next = { ...pending.assign }

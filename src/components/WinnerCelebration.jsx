@@ -14,7 +14,7 @@ export default function WinnerCelebration({ round, onPenalty, onClose }) {
         <p className="winner-trophy" aria-hidden="true">🏆</p>
         <h2 id="winner-title" className="winner-name">{winners.map((w) => w.member).join(' · ')}</h2>
         <p className="winner-sub">
-          넷 {winners[0].net}타 {winners.length > 1 ? '공동 우승' : '우승'}
+          {winners[0].net}타 {winners.length > 1 ? '공동 우승' : '우승'}
         </p>
 
         <ol className="winner-board">

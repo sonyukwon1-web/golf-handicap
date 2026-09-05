@@ -120,11 +120,11 @@ export default function HallOfFame({ rounds }) {
   return (
     <>
       <Ranking
-        title="명예의 전당" hint="넷 스코어 1등 횟수" icon="👑" tone="fame-good"
+        title="명예의 전당" hint="핸디 적용 후 1등 횟수" icon="👑" tone="fame-good"
         rows={wins} valueKey="wins" unit="승"
       />
       <Ranking
-        title="흑역사관" hint="넷 스코어 꼴찌 횟수" icon="🫠" tone="fame-bad"
+        title="흑역사관" hint="핸디 적용 후 꼴찌 횟수" icon="🫠" tone="fame-bad"
         rows={lasts} valueKey="lasts" unit="회" marks={SHAME}
       />
 

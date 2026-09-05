@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { josaWith } from '../lib/josa.js'
 
 const NINE = 9
 
@@ -8,7 +9,7 @@ const NINE = 9
  * 총타수가 같아도 홀별 기록은 다르므로, 각 줄의 스코어카드를 함께 보여 준다.
  * 그걸 봐야 누가 누군지 가릴 수 있다.
  */
-export default function NamePicker({ rows, onConfirm, onCancel }) {
+export default function NamePicker({ rows, card, onConfirm, onCancel }) {
   const [picks, setPicks] = useState(() => rows.map(() => ''))
   const dialogRef = useRef(null)
 
@@ -40,8 +41,15 @@ export default function NamePicker({ rows, onConfirm, onCancel }) {
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" tabIndex={-1} ref={dialogRef}>
         <h2 id="picker-title" className="modal-title">누구의 기록인지 골라 주세요</h2>
+        {card && (
+          <p className="picker-card">
+            {[card.date, card.course, [card.courseFront, card.courseBack].filter(Boolean).join('-'), card.teeTime]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
         <p className="modal-desc">
-          카드에 <b>{rows[0].label}</b> 가 두 줄이라 앱이 구분할 수 없습니다.{' '}
+          카드에 <b>{josaWith(rows[0].label, '이/가')}</b> 두 줄이라 앱이 구분할 수 없습니다.{' '}
           {tied
             ? <>두 분의 <b>총타수가 같으니</b> 홀별 기록을 보고 골라 주세요.</>
             : <>타수를 보고 이름을 눌러 주세요.</>}
@@ -66,6 +74,11 @@ export default function NamePicker({ rows, onConfirm, onCancel }) {
             </div>
 
             <table className="map-card">
+              <colgroup>
+                <col className="name" />
+                {Array.from({ length: NINE }, (_, k) => <col className="hole" key={k} />)}
+                <col className="total" />
+              </colgroup>
               <thead>
                 <tr>
                   <th />

@@ -867,6 +867,19 @@ table.data td.worst { color: var(--ink-3); }
 /* ── 라이벌 매치 ──────────────────────────────────────── */
 .rival-card { padding: 14px; }
 
+/* 맞대결 표의 날짜 밑에 붙는 골프장 이름 — 날짜보다 한 단계 물러선다 */
+.rival-course {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-3);
+  /* 이름이 길면 줄이 바뀌는 대신 잘린다 — 표가 옆으로 늘어나면 승자 칸이 밀린다 */
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .rival-pick {
   display: flex;
   align-items: center;
@@ -1317,6 +1330,17 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 /* ── 이름 고르기 팝업 ─────────────────────────────────── */
 .modal.picker { max-width: 460px; }
 
+/* 여러 장을 이어서 올릴 때 지금 어느 카드인지 */
+.picker-card {
+  margin: -10px 0 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+}
+
 .pick-row {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
@@ -1337,8 +1361,44 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 .pick-head .segmented { flex: 1; background: var(--surface); }
 .pick-head .segmented button { min-height: 36px; font-size: 13.5px; }
 
-.pick-row table.map-card { margin-top: 8px; }
-.pick-row table.map-card .t { background: transparent; }
+/* 팝업 안 미니 스코어카드 — 총타수가 같아도 홀별로 가릴 수 있게 나란히 보여 준다 */
+table.map-card {
+  width: 100%;
+  margin: 8px 0 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+table.map-card col.name { width: 15%; }
+table.map-card col.hole { width: 8.3%; }
+table.map-card col.total { width: 10.3%; }
+
+table.map-card th,
+table.map-card td {
+  text-align: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--line);
+}
+table.map-card thead th {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  border-bottom-color: var(--line-strong);
+}
+table.map-card tbody th {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-align: left;
+}
+table.map-card tbody td { font-weight: 600; }
+table.map-card .t { font-weight: 750; }
+table.map-card td.miss { color: var(--ink-3); }
+table.map-card td.under { color: var(--series-1); font-weight: 750; }
+table.map-card td.blowup { color: var(--danger); }
+table.map-card tbody tr:last-child th,
+table.map-card tbody tr:last-child td { border-bottom: 0; }
 
 /* 파일 입력이 키보드로 잡혔을 때도 보이게 */
 input#scorecard-file:focus-visible + .dropzone {

@@ -91,7 +91,7 @@ function RoundDetail({ round }) {
             <th scope="col">순위</th>
             <th scope="col">그로스</th>
             <th scope="col">핸디</th>
-            <th scope="col">넷</th>
+            <th scope="col">최종</th>
           </tr>
         </thead>
         <tbody>
@@ -189,7 +189,7 @@ export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
                   <>
                     <span className="trophy" aria-hidden="true">🏆</span>
                     <b>{winner.member}</b>
-                    <span className="round-course">넷 {winner.net}</span>
+                    <span className="round-course">{winner.net}타</span>
                   </>
                 )}
                 <span className="chev" data-open={open} aria-hidden="true">▾</span>

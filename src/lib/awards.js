@@ -110,7 +110,7 @@ export function badges(rounds) {
       out[m].push({
         id: 'streak', icon: '🔥', tone: 'hot',
         label: `${rec[m].winStreak}연승 중`,
-        detail: `넷 스코어 기준 ${rec[m].winStreak}연승 중`,
+        detail: `핸디 적용 후 ${rec[m].winStreak}연승 중`,
       })
     }
     if (rec[m].lastStreak >= 3) {
