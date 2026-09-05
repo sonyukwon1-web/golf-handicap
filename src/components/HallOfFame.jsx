@@ -7,13 +7,13 @@ import { holeStats } from '../lib/holes.js'
 /*
   **반올림해서 한 자리까지만.**
 
-  1.4444444444444444 같은 수가 그대로 찍혔다. 오버 타수를 소수점 열여섯 자리로
+  1.4444444444444444 같은 수가 그대로 찍혔다. 파 대비 타수를 소수점 열여섯 자리로
   적어 봐야 알려 주는 것이 없고, 표만 옆으로 늘어난다.
 */
 const fmt1 = (v) => (v === null || v === undefined ? '–' : (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1))
 
 /** 홀별 기록이 쌓여야 나오는 통계 */
-function HoleAwards({ rounds }) {
+function HoleAwards({ rounds, period }) {
   const s = holeStats(rounds)
   if (!s) return null
 
@@ -31,7 +31,7 @@ function HoleAwards({ rounds }) {
     <div className="card fame-card">
       <div className="fame-head">
         <h3>📋 홀별 기록 통계</h3>
-        <span className="hint">{s.rounds}라운드 홀별 기준</span>
+        <span className="hint">{period ? `${period} · ${s.rounds}라운드` : `${s.rounds}라운드 홀별 기준`}</span>
       </div>
 
       <ul className="hole-awards">
@@ -110,7 +110,7 @@ function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS
   )
 }
 
-export default function HallOfFame({ rounds }) {
+export default function HallOfFame({ rounds, period }) {
   const rec = memberRecords(rounds)
   const photos = loadPhotos()
   const played = MEMBERS.filter((m) => rec[m].played > 0)
@@ -130,20 +130,20 @@ export default function HallOfFame({ rounds }) {
   return (
     <>
       <Ranking
-        title="명예의 전당" hint="친 타수 그대로 1등 횟수" icon="👑" tone="fame-good"
+        title="명예의 전당" hint={period ? `${period} · 1등 횟수` : '1등 횟수'} icon="👑" tone="fame-good"
         rows={wins} valueKey="wins" unit="승" photos={photos}
       />
       <Ranking
-        title="흑역사관" hint="친 타수 그대로 꼴찌 횟수" icon="🫠" tone="fame-bad"
+        title="흑역사관" hint={period ? `${period} · 꼴찌 횟수` : '꼴찌 횟수'} icon="🫠" tone="fame-bad"
         rows={lasts} valueKey="lasts" unit="회" marks={SHAME} photos={photos}
       />
 
-      <HoleAwards rounds={rounds} />
+      <HoleAwards rounds={rounds} period={period} />
 
       <div className="card fame-card">
         <div className="fame-head">
           <h3>⛳ 개인 기록</h3>
-          <span className="hint">그로스 기준</span>
+          <span className="hint">{period || '친 타수 기준'}</span>
         </div>
         <div className="table-scroll">
           <table className="data">

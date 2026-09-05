@@ -19,7 +19,7 @@ import { loadPhotos } from '../lib/photos.js'
  * 카드로 갈라 두면 눈이 네 번 움직여야 한다 — 한 줄씩 세우면 위아래로 훑힌다.
  *
  * **숫자는 '빼주는 타수' 로 적는다.** `3 핸디` 는 그 3이 무엇인지 말해 주지
- * 않는다. 이 앱에서 핸디는 넷 스코어를 낼 때 그로스에서 빼는 값이므로,
+ * 않는다. 이 앱에서 핸디는 친 타수에서 빼 주는 값이므로,
  * `−3` 이라고 적으면 91 → 88 이 그 자리에서 이어진다. 기준자는 `0`.
  * ══════════════════════════════════════════════════════════════════
  */
@@ -28,7 +28,8 @@ function HandicapRow({ s, slot, badges, photos }) {
   const 설명 = badges.find((b) => b.id === 열린딱지)?.detail
 
   return (
-    <li className="hd-row" style={{ '--dot': `var(--series-${slot})` }}>
+    <li className="hd-item" style={{ '--dot': `var(--series-${slot})` }}>
+     <div className="hd-row">
       {/* 이름 앞에 얼굴 — 사진이 없으면 성 한 글자가 색 테두리 안에 뜬다 */}
       <MemberAvatar member={s.member} src={photos?.[s.member]} size={40} />
       <div className="hd-who">
@@ -69,12 +70,15 @@ function HandicapRow({ s, slot, badges, photos }) {
         {/* 빼기표를 붙였더니 '−6점' 처럼 읽혀 되레 헷갈렸다 — 숫자만 적는다 */}
         {s.handicap === null ? '–' : s.handicap}
       </span>
+     </div>
       {/*
-        **설명은 반드시 핸디 숫자 뒤에 적는다.**
+        **설명은 줄(그리드) 바깥이다.**
 
-        앞에 두었더니 이것이 줄 전체를 차지하는 칸이라, 뒤에 오던 핸디 숫자가
-        설명 아래 새 줄로 밀려났다. 딱지를 누르는 순간 `0` 이 설명 밑에 툭
-        떨어져, 눌러서 나온 숫자처럼 보였다.
+        예전에는 이 설명이 얼굴·이름·평균·핸디와 같은 격자 안에 있으면서 '줄
+        전체를 차지하라'(`grid-column: 1 / -1`)고 적혀 있었다. 그러니 딱지를
+        누르는 순간 격자가 두 줄로 늘어나며 핸디 숫자가 설명 밑으로 떨어졌다 —
+        `0` 이 눌러서 나온 숫자처럼 보였다. 순서를 바꾸는 것으로는 격자의
+        배치 규칙에 계속 기대게 된다. 아예 격자 밖 아랫줄로 내보낸다.
       */}
       {설명 && <p className="badge-detail">{설명}</p>}
     </li>
@@ -94,7 +98,7 @@ export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync 
         <div className="section-head">
           <h2>핸디캡</h2>
           {/*
-            '그로스에서 빼는 타수' — 그로스가 무슨 말인지 모르면 이 줄은 아무것도
+            '그로스에서 빼는 타수' 라고 적었었다 — 그로스가 무슨 말인지 모르면 아무것도
             알려 주지 않는다. 아는 사람만 아는 말을 쓰지 않는다.
           */}
           <span className="hint">최근 5경기 평균</span>
@@ -104,7 +108,7 @@ export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync 
           ══════════════════════════════════════════════════════════
           **핸디는 켜서 보는 것이다.**
 
-          여태 순위가 늘 핸디를 적용한 넷 스코어였다. 그런데 라운드를 막 끝내고
+          여태 순위가 늘 핸디를 뺀 수였다. 그런데 라운드를 막 끝내고
           보는 것은 **카드에 찍힌 타수**다 — 91 을 친 사람이 86 을 친 사람보다
           위에 있으면, 셈이 맞아도 눈이 먼저 어긋난다. 기본은 순수 타수로 두고,
           핸디로 견주고 싶을 때 켠다.

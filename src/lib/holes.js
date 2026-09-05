@@ -13,7 +13,7 @@ export const emptyOvers = () => Array(HOLES).fill(null)
 
 const num = (v) => (Number.isFinite(v) ? v : null)
 
-/** 파와 오버가 모두 들어온 홀만 세어 그로스를 더한다. */
+/** 파와 파 대비 타수가 모두 들어온 홀만 세어 친 타수를 더한다. */
 export function grossOf(pars, overs, from = 0, to = HOLES) {
   if (!pars || !overs) return { strokes: 0, filled: 0 }
   let strokes = 0

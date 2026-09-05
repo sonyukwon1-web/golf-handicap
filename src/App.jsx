@@ -199,7 +199,13 @@ export default function App() {
     기록·시즌 랭킹·라이벌 매치. 한 화면이 한 기간을 말해야 견줄 수 있다.
     ══════════════════════════════════════════════════════════
   */
-  const [기간, set기간] = useState('recent')
+  /*
+    첫 값은 **비워 둔다.** 'recent' 라는 항목을 따로 두었더니, 목록에 은화삼이
+    빤히 있는데도 '최근 라운드' 라는 딴 줄이 골라져 있었다 — 같은 것을 가리키는
+    이름이 둘이면 무엇을 보고 있는지 헷갈린다. 비워 두면 아래에서 가장 최근
+    라운드의 id 로 메워지고, 자료가 늦게 도착해도 그때 맞춰 따라온다.
+  */
+  const [기간, set기간] = useState(null)
   const 해목록 = [...new Set(rounds.map((r) => String(r.date).slice(0, 4)).filter(Boolean))]
     .sort((a, b) => (a < b ? 1 : -1))
 
@@ -241,19 +247,21 @@ export default function App() {
     한 화면에 선다.
   */
   const 최신순 = sortRounds(rounds).slice().reverse()
-  const 고른라운드 = 최신순.find((r) => String(r.id) === 기간) || null
+  /** 고르지 않았으면 가장 최근 라운드 (없으면 최근 5개 평균) */
+  const 본기간 = 기간 ?? (최신순[0] ? String(최신순[0].id) : 'last5')
+  const 고른라운드 = 최신순.find((r) => String(r.id) === 본기간) || null
 
   /*
     '최근 5개 라운드' 는 **사람마다 제 마지막 다섯 번**을 뜻한다 (홈 핸디와 같은 셈).
     아래 홀별 기록·라이벌은 라운드 묶음이 있어야 하므로 최근 다섯 라운드를 쓴다.
   */
-  const 사람별5 = 기간 === 'last5' ? 5 : null
+  const 사람별5 = 본기간 === 'last5' ? 5 : null
   /** 평균을 보고 있는가 — 최근 5개이거나 어느 해이거나 */
-  const 평균보기 = 기간 === 'last5' || /^\d{4}$/.test(기간)
+  const 평균보기 = 본기간 === 'last5' || /^\d{4}$/.test(본기간)
 
   const 기간라운드 = (() => {
-    if (기간 === 'last5') return sortRounds(rounds).slice(-5)
-    if (/^\d{4}$/.test(기간)) return rounds.filter((r) => String(r.date).startsWith(기간))
+    if (본기간 === 'last5') return sortRounds(rounds).slice(-5)
+    if (/^\d{4}$/.test(본기간)) return rounds.filter((r) => String(r.date).startsWith(본기간))
     if (고른라운드) return [고른라운드]
     return rounds
   })()
@@ -265,11 +273,17 @@ export default function App() {
    * 평균 시상대가 하나 더 서서 두 개가 겹쳐 뜨고, 맨 위 카드는 그대로라
    * **고른 것이 반영이 안 된 것처럼 보였다.**
    */
-  const 볼라운드 = 평균보기
-    ? null
+  const 볼라운드 = 평균보기 || !고른라운드 ? null : outcomes.find((o) => o.id === 고른라운드.id) || null
+
+  /*
+    **고른 것의 이름.** 아래 카드들이 저마다 이 이름을 머리에 단다 — 셈만
+    바뀌고 이름은 그대로면, 2026년을 골라 놓고도 무엇을 보고 있는지 알 수 없다.
+  */
+  const 기간이름 = 평균보기
+    ? (본기간 === 'last5' ? '최근 5개 라운드 평균' : `${본기간}년 평균`)
     : 고른라운드
-      ? outcomes.find((o) => o.id === 고른라운드.id) || null
-      : latest
+      ? `${fmtDate(고른라운드.date)} · ${고른라운드.course || '골프장 미입력'}`
+      : '전체'
 
   return (
     <div className="app">
@@ -342,7 +356,8 @@ export default function App() {
           <section className="section fame-stack">
             <div className="section-head">
               <h2>명예의 전당 &amp; 흑역사관</h2>
-              <span className="hint">{roundCount}라운드 누적</span>
+              {/* 늘 '5라운드 누적' 이라 적혀 있었다 — 무엇을 골랐든 같은 말이었다 */}
+              <span className="hint">{기간이름}</span>
             </div>
             <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
 
@@ -353,13 +368,12 @@ export default function App() {
                 평균이 위, 라운드 하나하나가 아래. 여럿을 묶어 보는 것이 먼저
                 눈에 들어와야 한다 — 날짜 목록은 길어서 아래에 두어도 찾기 쉽다.
               */}
-              <select value={기간} onChange={(e) => set기간(e.target.value)}>
+              <select value={본기간} onChange={(e) => set기간(e.target.value)}>
                 <optgroup label="평균">
                   <option value="last5">최근 5개 라운드 평균</option>
                   {해목록.map((y) => <option key={y} value={y}>{y}년 평균</option>)}
                 </optgroup>
                 <optgroup label="라운드 (날짜순)">
-                  <option value="recent">최근 라운드</option>
                   {최신순.map((r) => (
                     <option key={r.id} value={String(r.id)}>
                       {fmtDate(r.date)} · {r.course || '골프장 미입력'}
@@ -378,8 +392,8 @@ export default function App() {
             {볼라운드 && (
               <div className="card podium-card">
                 <div className="fame-head">
-                  <h3>🏆 {고른라운드 ? '이 라운드' : '최근 라운드'}</h3>
-                  <span className="hint">{fmtDate(볼라운드.date)} · {볼라운드.course || '골프장 미입력'}</span>
+                  <h3>🏆 {볼라운드.course || '이 라운드'}</h3>
+                  <span className="hint">{fmtDate(볼라운드.date)}</span>
                 </div>
                 <Podium round={볼라운드} compact />
               </div>
@@ -395,7 +409,7 @@ export default function App() {
             {평균순위 && (
               <div className="card podium-card">
                 <div className="fame-head">
-                  <h3>🏆 {기간 === 'last5' ? '최근 5개 라운드' : `${기간}년`} 평균</h3>
+                  <h3>🏆 {본기간 === 'last5' ? '최근 5개 라운드' : `${본기간}년`} 평균</h3>
                   <span className="hint">{기간라운드.length}라운드 · 친 타수 그대로</span>
                 </div>
                 <Podium round={평균순위} compact />
@@ -404,8 +418,8 @@ export default function App() {
 
             {평균순위 && <AverageBoard rounds={사람별5 ? rounds : 기간라운드} perMember={사람별5} />}
 
-            <HallOfFame rounds={기간라운드} />
-            <RivalMatch rounds={기간라운드} />
+            <HallOfFame rounds={기간라운드} period={기간이름} />
+            <RivalMatch rounds={기간라운드} period={기간이름} />
           </section>
         )}
 

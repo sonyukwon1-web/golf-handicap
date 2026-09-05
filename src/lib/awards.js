@@ -81,7 +81,7 @@ export function improvements(rounds) {
   return out
 }
 
-/** 그로스 표준편차. 작을수록 기복이 없다. */
+/** 친 타수가 제 평균에서 얼마나 벗어나는지(표준편차). 작을수록 기복이 없다. */
 export function consistency(rounds) {
   const sorted = sortRounds(rounds)
   const out = {}
@@ -136,14 +136,14 @@ export function badges(rounds, opts = DEFAULT_RANKING) {
     out[steady].push({
       id: 'steady', icon: '🎯', tone: 'calm',
       label: `안정왕 ±${dev[steady].toFixed(1)}`,
-      detail: `안정왕 — 그로스 표준편차 ${dev[steady].toFixed(1)}타로 기복이 가장 적습니다`,
+      detail: `안정왕 — 칠 때마다 제 평균에서 ±${dev[steady].toFixed(1)}타밖에 안 벗어납니다. 기복이 가장 적어요`,
     })
   }
 
   return out
 }
 
-/** 두 멤버가 함께 친 라운드만 모아 넷 스코어로 1:1 전적을 낸다. */
+/** 두 멤버가 함께 친 라운드만 모아 친 타수로 1:1 전적을 낸다. */
 export function headToHead(rounds, a, b, opts = DEFAULT_RANKING) {
   const shared = roundOutcomes(rounds, opts).filter(
     (o) => o.entries.some((e) => e.member === a) && o.entries.some((e) => e.member === b),

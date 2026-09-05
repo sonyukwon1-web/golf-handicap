@@ -6,7 +6,7 @@ import MemberAvatar from './MemberAvatar.jsx'
 import { loadPhotos } from '../lib/photos.js'
 
 /** 두 명을 골라 1:1 상대전적을 본다. 승패는 친 타수로 센다. */
-export default function RivalMatch({ rounds }) {
+export default function RivalMatch({ rounds, period }) {
   const [a, setA] = useState(MEMBERS[0])
   const [b, setB] = useState(MEMBERS[1])
 
@@ -28,8 +28,8 @@ export default function RivalMatch({ rounds }) {
     <div className="card rival-card">
       <div className="fame-head">
         <h3>⚔️ 라이벌 매치</h3>
-        {/* 핸디로 겨루지 않게 되었다 — '핸디 적용 후' 라고 적혀 있으면 거짓말이다 */}
-        <span className="hint">친 타수 기준</span>
+        {/* 무엇을 보고 있는지 — 셈만 기간을 따르고 이름은 그대로면 알 길이 없다 */}
+        <span className="hint">{period || '친 타수 기준'}</span>
       </div>
 
       <div className="rival-pick">
@@ -66,7 +66,7 @@ export default function RivalMatch({ rounds }) {
           </div>
 
           <p className="rival-gap">
-            평균 그로스 차이{' '}
+            평균 타수 차이{' '}
             <b>
               {h.avgGrossGap === 0
                 ? '없음'
@@ -97,7 +97,7 @@ export default function RivalMatch({ rounds }) {
                       {fmtDate(r.date)}
                       {r.course ? <small className="rival-course">{r.course}</small> : null}
                     </th>
-                    {/* 넷은 이제 그로스와 같은 수다 — 같은 것을 괄호로 한 번 더 적지 않는다 */}
+                    {/* 핸디를 뺀 수는 친 타수와 같다 — 같은 것을 괄호로 한 번 더 적지 않는다 */}
                     <td>{r.a.gross}</td>
                     <td>{r.b.gross}</td>
                     <td>{r.winner || '무승부'}</td>
