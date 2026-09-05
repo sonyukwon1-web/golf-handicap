@@ -65,11 +65,18 @@ function HandicapRow({ s, slot, badges, photos }) {
         평균 <b>{fmtAvg(s.average)}</b>
         <em>{s.total}R</em>
       </span>
-      {설명 && <p className="badge-detail">{설명}</p>}
       <span className="hd-num" data-base={s.isBase || undefined}>
         {/* 빼기표를 붙였더니 '−6점' 처럼 읽혀 되레 헷갈렸다 — 숫자만 적는다 */}
         {s.handicap === null ? '–' : s.handicap}
       </span>
+      {/*
+        **설명은 반드시 핸디 숫자 뒤에 적는다.**
+
+        앞에 두었더니 이것이 줄 전체를 차지하는 칸이라, 뒤에 오던 핸디 숫자가
+        설명 아래 새 줄로 밀려났다. 딱지를 누르는 순간 `0` 이 설명 밑에 툭
+        떨어져, 눌러서 나온 숫자처럼 보였다.
+      */}
+      {설명 && <p className="badge-detail">{설명}</p>}
     </li>
   )
 }

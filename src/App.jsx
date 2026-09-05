@@ -334,7 +334,7 @@ export default function App() {
             </div>
             {/* 순위를 보는 자리에 켜고 끄는 자리를 함께 둔다 */}
             <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
-            <RoundList rounds={rounds} ranking={ranking} onUpdate={updateRound} onDelete={deleteRound} />
+            <RoundList rounds={rounds} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
 
@@ -404,8 +404,8 @@ export default function App() {
 
             {평균순위 && <AverageBoard rounds={사람별5 ? rounds : 기간라운드} perMember={사람별5} />}
 
-            <HallOfFame rounds={기간라운드} ranking={ranking} />
-            <RivalMatch rounds={기간라운드} ranking={ranking} />
+            <HallOfFame rounds={기간라운드} />
+            <RivalMatch rounds={기간라운드} />
           </section>
         )}
 
@@ -445,7 +445,7 @@ export default function App() {
       </main>
 
       {celebrating && (
-        <WinnerCelebration round={celebrating} ranking={ranking} onClose={() => setCelebrateId(null)} />
+        <WinnerCelebration round={celebrating} onClose={() => setCelebrateId(null)} />
       )}
 
     </div>

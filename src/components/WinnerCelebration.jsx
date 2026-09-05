@@ -11,7 +11,7 @@ import { fmtDate } from '../lib/handicap.js'
  *
  * 색은 전부 토큰(--gold, --sand …)이라 다크 모드가 따로 필요 없다.
  */
-export default function WinnerCelebration({ round, ranking, onClose }) {
+export default function WinnerCelebration({ round, onClose }) {
 
   return (
     <div className="modal-backdrop celebrate" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -24,7 +24,7 @@ export default function WinnerCelebration({ round, ranking, onClose }) {
         <p className="hint" style={{ margin: 0 }}>친 타수 그대로</p>
 
         {/* 시상대와 벙커는 랭킹 화면과 **같은 부품**을 쓴다 (Podium) */}
-        <Podium round={round} ranking={ranking} />
+        <Podium round={round} />
 
         <div className="modal-foot">
           <button type="button" className="btn primary" onClick={onClose}>닫기</button>

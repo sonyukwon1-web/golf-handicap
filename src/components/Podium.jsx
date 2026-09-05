@@ -14,7 +14,7 @@ import { loadPhotos } from '../lib/photos.js'
  * 두 자리에서 쓰면 한 번 고칠 때 둘 다 따라온다.
  * ══════════════════════════════════════════════════════════════════
  */
-export default function Podium({ round, ranking, compact = false }) {
+export default function Podium({ round, compact = false }) {
   const photos = loadPhotos()
   const score = (e) => e.gross
 

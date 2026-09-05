@@ -88,12 +88,17 @@ function RoundDetail({ round }) {
     <div className="table-scroll">
       <table className="data">
         <caption className="sr-only">{fmtDate(round.date)} 라운드 순위</caption>
+        {/*
+          **핸디·최종 칸을 뺐다.**
+
+          순위를 친 타수로만 매기게 되면서 최종이 늘 그로스와 같아졌다. 그런데
+          표에는 '핸디 −6' 이 적혀 있으니, 6타를 빼 준다면서 최종은 그대로인
+          앞뒤 안 맞는 줄이 남았다. 핸디는 홈 화면이 말한다.
+        */}
         <thead>
           <tr>
             <th scope="col">순위</th>
-            <th scope="col">그로스</th>
-            <th scope="col">핸디</th>
-            <th scope="col">최종</th>
+            <th scope="col">타수</th>
           </tr>
         </thead>
         <tbody>
@@ -105,9 +110,7 @@ function RoundDetail({ round }) {
                   {e.member}
                 </span>
               </th>
-              <td>{e.gross}</td>
-              <td>{e.handicap > 0 ? `-${e.handicap}` : '0'}</td>
-              <td className="net-val">{e.net}</td>
+              <td className="net-val">{e.gross}</td>
             </tr>
           ))}
         </tbody>
@@ -147,11 +150,11 @@ function RoundEditor({ round, onSave, onCancel }) {
   )
 }
 
-export default function RoundList({ rounds, ranking, onUpdate, onDelete, limit }) {
+export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
   const [openId, setOpenId] = useState(null)
   const [editId, setEditId] = useState(null)
 
-  const details = computeRoundDetails(rounds, ranking).reverse()
+  const details = computeRoundDetails(rounds).reverse()
   const photos = loadPhotos()
   const shown = limit ? details.slice(0, limit) : details
 
@@ -193,7 +196,7 @@ export default function RoundList({ rounds, ranking, onUpdate, onDelete, limit }
                     {/* 트로피 이모지 자리에 우승자 얼굴 — 1위라 금테가 둘린다 */}
                     <MemberAvatar member={winner.member} src={photos[winner.member]} size={42} rank={1} />
                     <b>{winner.member}</b>
-                    <span className="round-course">{winner.net}타</span>
+                    <span className="round-course">{winner.gross}타</span>
                   </>
                 )}
                 <span className="chev" data-open={open} aria-hidden="true">▾</span>

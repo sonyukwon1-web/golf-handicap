@@ -150,7 +150,14 @@ export function holeStats(rounds) {
     rounds: rounds.filter(hasHoleData).length,
     par3: lowest((m) => parAvg(m, 3)),
     par5: lowest((m) => parAvg(m, 5)),
-    collapse: highest(collapse),
+    /*
+      **아무도 안 무너졌으면 왕을 세우지 않는다.**
+
+      넷 다 후반이 더 좋았던 날에도 '후반 무너짐 — 손유권 0.0타' 가 떴다.
+      가장 덜 좋아진 사람일 뿐인데 무너졌다고 적히니, 잘 친 사람이 상처를
+      받는다. 버디·양파를 0회면 감추는 것과 같은 잣대다.
+    */
+    collapse: (() => { const top = highest(collapse); return top && top[1] > 0 ? top : null })(),
     birdie: birdies[0]?.[1] > 0 ? birdies[0] : null,
     doublePar: doubles[0]?.[1] > 0 ? doubles[0] : null,
     table: played.map((m) => ({
