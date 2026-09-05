@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { trashTalk } from '../lib/trashtalk.js'
 
 /** 상황을 보고 한 마디 얹는다. 새로고침 버튼으로 다른 멘트를 뽑는다. */
-export default function TrashTalk({ rounds }) {
-  const lines = useMemo(() => trashTalk(rounds), [rounds])
+export default function TrashTalk({ rounds, ranking }) {
+  const lines = useMemo(() => trashTalk(rounds, ranking), [rounds, ranking])
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1000))
 
   if (lines.length === 0) return null

@@ -231,6 +231,77 @@ main.shell { padding-top: 20px; }
 }
 
 /* ── 멤버 카드 ────────────────────────────────────────── */
+/* ── 순위 방식 고르개 ─────────────────────────────────── */
+.rank-opts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+}
+
+/* 켰는지 껐는지가 한눈에 — 막대가 왼쪽이면 끔, 오른쪽이면 켬 */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.toggle i {
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  position: relative;
+  transition: background 0.15s ease;
+  flex: 0 0 auto;
+}
+.toggle i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+.toggle.on { color: var(--ink-1); }
+.toggle.on i { background: var(--green); }
+.toggle.on i::after { transform: translateX(16px); }
+
+.rank-opts .cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.rank-opts .cap input {
+  width: 62px;
+  min-width: 0;
+  text-align: right;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rank-opts .cap .unit { color: var(--ink-3); }
+
 /* ── 핸디 목록 ────────────────────────────────────────── */
 .hdcp-list { list-style: none; margin: 0; padding: 4px 0; }
 

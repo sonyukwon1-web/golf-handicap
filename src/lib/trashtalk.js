@@ -62,12 +62,12 @@ const fill = (line, name, value) =>
     .replace('{v}', value)
 
 /** 지금 데이터로 할 수 있는 도발을 전부 모아 돌려준다. */
-export function trashTalk(rounds) {
+export function trashTalk(rounds, opts) {
   if (rounds.length === 0) return pick(LINES.idle)
 
-  const rec = memberRecords(rounds)
+  const rec = memberRecords(rounds, opts)
   const imp = improvements(rounds)
-  const { stats } = computeStats(rounds)
+  const { stats } = computeStats(rounds, opts)
   const out = []
 
   for (const m of MEMBERS) {

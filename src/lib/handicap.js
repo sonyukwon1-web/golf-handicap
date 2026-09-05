@@ -34,10 +34,29 @@ export function recentAverage(sortedRounds, member, n = RECENT_N) {
 }
 
 /**
+ * 순위를 어떻게 매길지 — **화면 어디서나 같은 값을 본다.**
+ *
+ *   useHandicap : 핸디를 적용한 넷 스코어로 매길지. **기본은 끔**이다 —
+ *                 카드에 찍힌 타수가 먼저이고, 핸디는 보고 싶을 때 켜는 것이다.
+ *   cap         : 핸디 상한. 스물 몇 타씩 벌어지면 그날 잘 친 사람이 아무리
+ *                 쳐도 못 이기는 판이 된다. 비우면(null) 상한 없음.
+ */
+export const DEFAULT_RANKING = { useHandicap: false, cap: null }
+
+/** 상한이 있으면 거기서 자른다 */
+function capped(handicap, cap) {
+  if (handicap === null) return null
+  return Number.isFinite(cap) && cap >= 0 ? Math.min(handicap, cap) : handicap
+}
+
+/**
  * 주어진 라운드 집합 기준의 멤버별 통계와 핸디캡.
  * 평균이 가장 낮은 멤버가 기준(핸디 0), 나머지는 (본인 평균 - 최저 평균) 반올림.
+ *
+ * **상한은 여기서 자른다** — 핸디를 켜든 끄든 화면에 적히는 수는 잘린 값이어야
+ * 한다. 켜는 순간 다른 수가 나오면 무엇을 본 것인지 알 수 없다.
  */
-export function computeStats(rounds) {
+export function computeStats(rounds, opts = DEFAULT_RANKING) {
   const sorted = sortRounds(rounds)
   const stats = {}
 
@@ -61,7 +80,7 @@ export function computeStats(rounds) {
   for (const m of MEMBERS) {
     const s = stats[m]
     if (s.average === null || baseAverage === null) continue
-    s.handicap = Math.round(s.average - baseAverage)
+    s.handicap = capped(Math.round(s.average - baseAverage), opts?.cap)
     s.isBase = s.average === baseAverage
   }
 
@@ -73,18 +92,21 @@ export function computeStats(rounds) {
  * 각 라운드의 "당시 핸디"는 그 라운드까지의 기록으로 산정한 스냅샷이라
  * 가장 최근 라운드의 핸디는 화면에 표시되는 현재 핸디와 항상 일치한다.
  */
-export function computeRoundDetails(rounds) {
+export function computeRoundDetails(rounds, opts = DEFAULT_RANKING) {
   const sorted = sortRounds(rounds)
 
   return sorted.map((round, i) => {
-    const { stats } = computeStats(sorted.slice(0, i + 1))
+    const { stats } = computeStats(sorted.slice(0, i + 1), opts)
 
     const entries = MEMBERS.filter((m) => isScore(round.scores?.[m]))
       .map((m) => {
         const gross = round.scores[m]
-        // 기록이 한 번뿐이면 "평균"이 그 날 타수 그 자체라, 핸디가 타수 차이를
-        // 그대로 상쇄해 전원 동타가 된다. 그래서 2라운드째부터 핸디를 적용한다.
-        const handicap = stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
+        /*
+         * 핸디를 끄면 **카드에 찍힌 타수 그대로** 겨룬다 (net === gross).
+         * 켜도 기록이 한 번뿐이면 안 준다 — '평균' 이 그 날 타수 그 자체라
+         * 핸디가 타수 차이를 그대로 상쇄해 전원 동타가 된다.
+         */
+        const handicap = opts?.useHandicap && stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
         return { member: m, gross, handicap, net: gross - handicap }
       })
       .sort((a, b) => a.net - b.net || a.gross - b.gross)

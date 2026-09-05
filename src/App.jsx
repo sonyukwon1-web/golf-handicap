@@ -8,7 +8,7 @@ import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { computeStats } from './lib/handicap.js'
+import { DEFAULT_RANKING, computeStats } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save } from './lib/storage.js'
 
@@ -56,6 +56,9 @@ export default function App() {
 
   const rounds = data.rounds
   const roundCount = rounds.length
+  /** 순위를 어떻게 매기나 — 핸디 켜기·상한. 화면 전부가 이 하나를 본다 */
+  const ranking = data.ranking ?? DEFAULT_RANKING
+  const setRanking = (patch) => setData((d) => ({ ...d, ranking: { ...ranking, ...patch } }))
 
   /**
    * 이미 등록된 라운드는 건너뛴다. 무엇이 저장되고 무엇이 걸렸는지 돌려주어
@@ -90,8 +93,8 @@ export default function App() {
     setData((d) => ({ ...d, rounds: d.rounds.filter((r) => r.id !== id) }))
 
   /* 라운드마다의 순위·꼴찌 — 우승 발표 화면이 이걸 본다 */
-  const outcomes = roundOutcomes(rounds)
-  const { stats } = computeStats(rounds)
+  const outcomes = roundOutcomes(rounds, ranking)
+  const { stats } = computeStats(rounds, ranking)
   /** 방금 저장한 라운드 (저장 직후 우승자를 띄운다) */
   const celebrating = celebrateId ? outcomes.find((o) => o.id === celebrateId) : null
 
@@ -167,6 +170,8 @@ export default function App() {
         {tab === 'home' && (
           <Dashboard
             rounds={rounds}
+            ranking={ranking}
+            onRanking={setRanking}
             onUpdate={updateRound}
             onDelete={deleteRound}
             onGoInput={() => setTab('input')}
@@ -179,7 +184,7 @@ export default function App() {
               <h2>전체 라운드</h2>
               <span className="hint">{roundCount}개</span>
             </div>
-            <RoundList rounds={rounds} onUpdate={updateRound} onDelete={deleteRound} />
+            <RoundList rounds={rounds} ranking={ranking} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
 
@@ -189,9 +194,9 @@ export default function App() {
               <h2>명예의 전당 &amp; 흑역사관</h2>
               <span className="hint">{roundCount}라운드 누적</span>
             </div>
-            <HallOfFame rounds={rounds} />
-            <SeasonRanking rounds={rounds} />
-            <RivalMatch rounds={rounds} />
+            <HallOfFame rounds={rounds} ranking={ranking} />
+            <SeasonRanking rounds={rounds} ranking={ranking} />
+            <RivalMatch rounds={rounds} ranking={ranking} />
           </section>
         )}
 
@@ -232,7 +237,7 @@ export default function App() {
       </main>
 
       {celebrating && (
-        <WinnerCelebration round={celebrating} onClose={() => setCelebrateId(null)} />
+        <WinnerCelebration round={celebrating} ranking={ranking} onClose={() => setCelebrateId(null)} />
       )}
 
     </div>

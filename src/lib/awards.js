@@ -1,12 +1,12 @@
 // 명예의 전당 · 배지 · 라이벌 전적 · 시즌 랭킹 계산 (순수 함수)
 
-import { MEMBERS, computeRoundDetails, scoresOf, sortRounds } from './handicap.js'
+import { DEFAULT_RANKING, MEMBERS, computeRoundDetails, scoresOf, sortRounds } from './handicap.js'
 
 const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length
 
 /** 라운드별 우승자/꼴찌를 붙인다. 동점이면 공동으로 본다. */
-export function roundOutcomes(rounds) {
-  return computeRoundDetails(rounds).map((r) => {
+export function roundOutcomes(rounds, opts = DEFAULT_RANKING) {
+  return computeRoundDetails(rounds, opts).map((r) => {
     const nets = r.entries.map((e) => e.net)
     const worstNet = nets.length ? Math.max(...nets) : null
     return {
@@ -19,8 +19,8 @@ export function roundOutcomes(rounds) {
 }
 
 /** 통산 우승/꼴찌 횟수, 베스트/워스트, 현재 연승·연속꼴찌 */
-export function memberRecords(rounds) {
-  const outcomes = roundOutcomes(rounds)
+export function memberRecords(rounds, opts = DEFAULT_RANKING) {
+  const outcomes = roundOutcomes(rounds, opts)
   const sorted = sortRounds(rounds)
   const rec = {}
 
@@ -99,8 +99,8 @@ export function consistency(rounds) {
 }
 
 /** 멤버별 배지. 발전상·안정왕은 한 명에게만 붙는다. */
-export function badges(rounds) {
-  const rec = memberRecords(rounds)
+export function badges(rounds, opts = DEFAULT_RANKING) {
+  const rec = memberRecords(rounds, opts)
   const imp = improvements(rounds)
   const dev = consistency(rounds)
   const out = Object.fromEntries(MEMBERS.map((m) => [m, []]))
@@ -144,8 +144,8 @@ export function badges(rounds) {
 }
 
 /** 두 멤버가 함께 친 라운드만 모아 넷 스코어로 1:1 전적을 낸다. */
-export function headToHead(rounds, a, b) {
-  const shared = roundOutcomes(rounds).filter(
+export function headToHead(rounds, a, b, opts = DEFAULT_RANKING) {
+  const shared = roundOutcomes(rounds, opts).filter(
     (o) => o.entries.some((e) => e.member === a) && o.entries.some((e) => e.member === b),
   )
 
@@ -188,10 +188,10 @@ export function headToHead(rounds, a, b) {
 export const rankPoints = (rank) => Math.max(1, 5 - rank)
 
 /** 연도별 시즌 랭킹. 최신 시즌이 먼저. */
-export function seasons(rounds) {
+export function seasons(rounds, opts = DEFAULT_RANKING) {
   const byYear = new Map()
 
-  for (const o of roundOutcomes(rounds)) {
+  for (const o of roundOutcomes(rounds, opts)) {
     const year = o.date.slice(0, 4)
     if (!byYear.has(year)) {
       byYear.set(year, {

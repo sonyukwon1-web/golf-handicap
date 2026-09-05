@@ -1,8 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { MEMBER_COLORS, fmtAvg, fmtDateShort, sortRounds, trendSeries } from '../lib/handicap.js'
 
-const PAD = { top: 14, right: 56, bottom: 26, left: 34 }
-const HEIGHT = 220
+/* 아래 여백은 두 줄(날짜 + 골프장)을 받는다 */
+const PAD = { top: 14, right: 56, bottom: 40, left: 34 }
+const HEIGHT = 234
+
+/** 골프장 이름은 가로 라벨이라 길면 잘라 쓴다 */
+const shortCourse = (name) => {
+  const t = (name || '').trim()
+  if (!t) return ''
+  return t.length > 6 ? `${t.slice(0, 6)}…` : t
+}
 
 function useWidth() {
   const ref = useRef(null)
@@ -65,16 +73,27 @@ export default function TrendChart({ rounds }) {
   const innerH = HEIGHT - PAD.top - PAD.bottom
 
   const xOf = (i) => PAD.left + (n === 1 ? innerW / 2 : ((i - 1) / (n - 1)) * innerW)
-  const yOf = (v) => PAD.top + innerH - ((v - yMin) / (yMax - yMin || 1)) * innerH
+  /*
+    ══════════════════════════════════════════════════════════
+    **위가 잘 친 쪽이다 — y축을 뒤집는다.**
+
+    골프는 적게 칠수록 잘 친 것인데, 수를 그대로 세우면 잘 친 사람이 그래프
+    바닥에 깔린다. 숫자를 아는 사람도 매번 '아래가 좋은 거였지' 를 되뇌어야
+    했다. 눈이 먼저 읽는 것을 셈보다 앞에 둔다 — 작은 수가 위로 간다.
+    (왼쪽 눈금 숫자도 저절로 뒤집힌다: 위가 작은 수)
+    ══════════════════════════════════════════════════════════
+  */
+  const yOf = (v) => PAD.top + ((v - yMin) / (yMax - yMin || 1)) * innerH
 
   const ticks = [yMin, (yMin + yMax) / 2, yMax]
 
   // x축 라벨은 좁은 화면에서 겹치지 않게 솎아낸다
-  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(innerW / 46))))
+  /* 날짜 밑에 골프장이 붙어 라벨이 넓어졌다 — 그만큼 사이를 벌려 솎는다 */
+  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(innerW / 64))))
   const xLabels = sorted
     .map((r, i) => i)
     .filter((i) => i % step === 0 || i === n - 1)
-    .filter((i, _, all) => i === n - 1 || xOf(n) - xOf(i + 1) > 34 || all.length === 1)
+    .filter((i, _, all) => i === n - 1 || xOf(n) - xOf(i + 1) > 50 || all.length === 1)
 
   const endLabels = spread(
     series.map((s) => {
@@ -143,10 +162,15 @@ export default function TrendChart({ rounds }) {
             </g>
           ))}
 
+          {/* 날짜 밑에 골프장 — 어느 날 어디서 친 라운드인지 그래프에서 바로 읽힌다 */}
           {xLabels.map((i) => (
-            <text key={i} x={xOf(i + 1)} y={HEIGHT - 8} textAnchor="middle"
-                  fontSize="10.5" fill="var(--ink-3)">
-              {fmtDateShort(sorted[i].date)}
+            <text key={i} x={xOf(i + 1)} textAnchor="middle" fill="var(--ink-3)">
+              <tspan x={xOf(i + 1)} y={HEIGHT - 22} fontSize="10.5">
+                {fmtDateShort(sorted[i].date)}
+              </tspan>
+              <tspan x={xOf(i + 1)} y={HEIGHT - 9} fontSize="9.5">
+                {shortCourse(sorted[i].course)}
+              </tspan>
             </text>
           ))}
 

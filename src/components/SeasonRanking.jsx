@@ -3,8 +3,8 @@ import { seasons } from '../lib/awards.js'
 const THIS_YEAR = String(new Date().getFullYear())
 
 /** 연간 포인트제: 1등 4점 · 2등 3점 · 3등 2점 · 4등 1점 */
-export default function SeasonRanking({ rounds }) {
-  const list = seasons(rounds)
+export default function SeasonRanking({ rounds, ranking }) {
+  const list = seasons(rounds, ranking)
   if (list.length === 0) return null
 
   const [current, ...past] = list

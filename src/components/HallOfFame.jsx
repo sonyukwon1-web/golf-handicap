@@ -101,8 +101,8 @@ function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS
   )
 }
 
-export default function HallOfFame({ rounds }) {
-  const rec = memberRecords(rounds)
+export default function HallOfFame({ rounds, ranking }) {
+  const rec = memberRecords(rounds, ranking)
   const played = MEMBERS.filter((m) => rec[m].played > 0)
 
   if (played.length === 0) {

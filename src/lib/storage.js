@@ -1,4 +1,4 @@
-import { MEMBERS, isScore } from './handicap.js'
+import { DEFAULT_RANKING, MEMBERS, isScore } from './handicap.js'
 import { HOLES, completeTotal } from './holes.js'
 
 const KEY = 'golf-handicap:v1'
@@ -7,6 +7,7 @@ export const emptyData = () => ({
   version: 3,
   members: MEMBERS,
   rounds: [],
+  ranking: { ...DEFAULT_RANKING },
 })
 
 /** 길이 18의 숫자 배열로 맞춘다. 값이 없거나 범위를 벗어나면 null. */
@@ -87,8 +88,19 @@ export function normalize(raw) {
     })
     .filter((r) => MEMBERS.some((m) => isScore(r.scores[m])))
 
+  /*
+    순위 매기는 방식 — 핸디를 켜 두었는지, 상한을 얼마로 두었는지.
+    없으면(옛 자료) 기본값 — **핸디 끔**이다.
+  */
+  const r = raw.ranking || {}
+  const cap = Number(r.cap)
+  const ranking = {
+    useHandicap: r.useHandicap === true,
+    cap: Number.isFinite(cap) && cap >= 0 ? Math.round(cap) : null,
+  }
+
   /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
-  return { version: 3, members: MEMBERS, rounds: clean }
+  return { version: 3, members: MEMBERS, rounds: clean, ranking }
 }
 
 export function load() {

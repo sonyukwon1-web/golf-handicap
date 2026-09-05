@@ -50,18 +50,62 @@ function HandicapRow({ s, slot, badges }) {
   )
 }
 
-export default function Dashboard({ rounds, onUpdate, onDelete, onGoInput }) {
-  const { stats } = computeStats(rounds)
-  const badges = computeBadges(rounds)
+export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDelete, onGoInput }) {
+  const { stats } = computeStats(rounds, ranking)
+  const badges = computeBadges(rounds, ranking)
 
   return (
     <>
-      <TrashTalk rounds={rounds} />
+      <TrashTalk rounds={rounds} ranking={ranking} />
 
       <section className="section">
         <div className="section-head">
           <h2>현재 핸디캡</h2>
           <span className="hint">최근 5경기 평균 기준 · 그로스에서 빼는 타수</span>
+        </div>
+
+        {/*
+          ══════════════════════════════════════════════════════════
+          **핸디는 켜서 보는 것이다.**
+
+          여태 순위가 늘 핸디를 적용한 넷 스코어였다. 그런데 라운드를 막 끝내고
+          보는 것은 **카드에 찍힌 타수**다 — 91 을 친 사람이 86 을 친 사람보다
+          위에 있으면, 셈이 맞아도 눈이 먼저 어긋난다. 기본은 순수 타수로 두고,
+          핸디로 견주고 싶을 때 켠다.
+
+          상한은 적는 대로 곧바로 다시 셈한다. 스물 몇 타씩 벌어지면 그날 아무리
+          잘 쳐도 못 이기는 판이 되기 때문에, 몇 타까지 봐줄지는 그때그때 정한다.
+          ══════════════════════════════════════════════════════════
+        */}
+        <div className="rank-opts card">
+          <button
+            type="button"
+            className={`toggle ${ranking.useHandicap ? 'on' : ''}`}
+            role="switch"
+            aria-checked={ranking.useHandicap}
+            onClick={() => onRanking({ useHandicap: !ranking.useHandicap })}
+          >
+            <i aria-hidden="true" />
+            <span>핸디 적용해서 순위 보기</span>
+          </button>
+
+          <label className="cap">
+            <span>상한</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max="54"
+              placeholder="없음"
+              value={ranking.cap ?? ''}
+              onChange={(e) => {
+                const v = e.target.value.trim()
+                const n = Number(v)
+                onRanking({ cap: v === '' || !Number.isFinite(n) || n < 0 ? null : Math.round(n) })
+              }}
+            />
+            <span className="unit">타</span>
+          </label>
         </div>
         <ul className="card hdcp-list">
           {MEMBERS.map((m, i) => (
@@ -94,7 +138,7 @@ export default function Dashboard({ rounds, onUpdate, onDelete, onGoInput }) {
             </div>
           </div>
         ) : (
-          <RoundList rounds={rounds} onUpdate={onUpdate} onDelete={onDelete} limit={5} />
+          <RoundList rounds={rounds} ranking={ranking} onUpdate={onUpdate} onDelete={onDelete} limit={5} />
         )}
       </section>
     </>

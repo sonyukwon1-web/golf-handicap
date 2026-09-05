@@ -145,11 +145,11 @@ function RoundEditor({ round, onSave, onCancel }) {
   )
 }
 
-export default function RoundList({ rounds, onUpdate, onDelete, limit }) {
+export default function RoundList({ rounds, ranking, onUpdate, onDelete, limit }) {
   const [openId, setOpenId] = useState(null)
   const [editId, setEditId] = useState(null)
 
-  const details = computeRoundDetails(rounds).reverse()
+  const details = computeRoundDetails(rounds, ranking).reverse()
   const shown = limit ? details.slice(0, limit) : details
 
   if (shown.length === 0) {
