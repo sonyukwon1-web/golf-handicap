@@ -88,10 +88,23 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
           ══════════════════════════════════════════════════════════
         */}
         <RankOptions ranking={ranking} onRanking={onRanking} />
+        {/*
+          **기준이 맨 위, 그 아래로 핸디가 적은 순.**
+
+          여태 멤버를 정해 둔 차례(MEMBERS)대로 세웠다. 그러면 기준자가 둘째 줄에
+          앉기도 해서, 0 을 찾으려면 네 줄을 훑어야 했다. 잘 치는 사람이 위에
+          오는 것은 옆의 추이 그래프와도 같은 방향이다.
+
+          색(slot)은 **정해 둔 차례**를 그대로 따른다 — 줄이 움직인다고 사람의
+          색까지 바뀌면 그래프의 선 색과 어긋난다.
+        */}
         <ul className="card hdcp-list">
-          {MEMBERS.map((m, i) => (
-            <HandicapRow key={m} s={stats[m]} slot={i + 1} badges={badges[m]} photos={photos} />
-          ))}
+          {MEMBERS
+            .map((m, i) => ({ m, slot: i + 1 }))
+            .sort((a, b) => (stats[a.m].handicap ?? 99) - (stats[b.m].handicap ?? 99))
+            .map(({ m, slot }) => (
+              <HandicapRow key={m} s={stats[m]} slot={slot} badges={badges[m]} photos={photos} />
+            ))}
         </ul>
       </section>
 

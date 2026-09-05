@@ -78,8 +78,8 @@ export default function TrendChart({ rounds }) {
   const rawMin = Math.min(...values)
   const rawMax = Math.max(...values)
   const pad = Math.max(2, (rawMax - rawMin) * 0.18)
-  const yMin = Math.floor((rawMin - pad) / 2) * 2
-  const yMax = Math.ceil((rawMax + pad) / 2) * 2
+  const yMin = Math.floor((rawMin - pad) / 5) * 5
+  const yMax = Math.ceil((rawMax + pad) / 5) * 5
 
   const w = Math.max(width, 280)
   const innerW = Math.max(1, w - PAD.left - PAD.right)
@@ -98,7 +98,15 @@ export default function TrendChart({ rounds }) {
   */
   const yOf = (v) => PAD.top + ((v - yMin) / (yMax - yMin || 1)) * innerH
 
-  const ticks = [yMin, (yMin + yMax) / 2, yMax]
+  /*
+    **가로줄은 5타마다.** 셋만 긋던 때는 줄 사이가 20타쯤 벌어져, 두 선이
+    몇 타 차이인지 눈으로 잴 수가 없었다. 5타는 골프에서 '한 뼘' 쯤 되는
+    단위라 세면서 읽힌다. 위아래 끝도 5의 배수에 맞춰 자른다.
+  */
+  const TICK = 5
+  const tickFrom = Math.ceil(yMin / TICK) * TICK
+  const ticks = []
+  for (let v = tickFrom; v <= yMax; v += TICK) ticks.push(v)
 
   // x축 라벨은 좁은 화면에서 겹치지 않게 솎아낸다
   /* 날짜 밑에 골프장이 붙어 라벨이 넓어졌다 — 그만큼 사이를 벌려 솎는다 */

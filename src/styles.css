@@ -207,7 +207,7 @@
   }
 }
 
-body { background: var(--bg-grad); background-attachment: fixed; }
+/* body 바탕은 아래 한 곳에서만 정한다 — 여기서 또 적으면 뒤엣것이 이겨 덮인다 */
 
 /* ── 아바타 ─────────────────────────────────────────────── */
 .avatar {
@@ -258,7 +258,9 @@ body { background: var(--bg-grad); background-attachment: fixed; }
 html, body { margin: 0; padding: 0; }
 
 body {
-  background: var(--bg);
+  /* 단색이 아니라 옅은 그라데이션 (handoff 디자인) */
+  background: var(--bg-grad);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font);
   font-size: 15px;
