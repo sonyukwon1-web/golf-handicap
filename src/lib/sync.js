@@ -1,50 +1,29 @@
-// 기기끼리 맞추기 — 방 이름 하나에 문서 한 장. 자세한 것은 api/sync.js 참고.
+// 기기끼리 맞추기 — 문서 한 장을 주고받는다. 자세한 것은 api/sync.js 참고.
 
 import { loadPhotos, savePhotos } from './photos.js'
 
-const ROOM_KEY = 'nakwon.room'
-
-/** 이 기기가 붙어 있는 방. 없으면 동기화를 안 한다 */
-export function loadRoom() {
-  try {
-    return localStorage.getItem(ROOM_KEY) || ''
-  } catch {
-    return ''
-  }
-}
-
-export function saveRoom(room) {
-  try {
-    if (room) localStorage.setItem(ROOM_KEY, room)
-    else localStorage.removeItem(ROOM_KEY)
-  } catch { /* 담을 자리가 없어도 이번 화면에서는 돌아간다 */ }
-}
-
 /**
- * 새 방 이름 — 여섯 글자.
+ * ══════════════════════════════════════════════════════════════════
+ * **아무것도 안 해도 맞춰진다.**
  *
- * 사람이 다른 기기에 **손으로 옮겨 적는** 값이라, 헷갈리는 글자를 뺀다
- * (0·O, 1·l·I). 여섯 글자면 32^6 ≈ 10억 가지라 남이 맞힐 일이 없다.
+ * 처음에는 연결 코드를 만들어 다른 기기에 옮겨 적게 했다. 그런데 그 한 걸음이
+ * 곧 '안 쓰는 이유' 가 됐다 — 넷이 쓰는 앱에 방을 나눌 까닭도 없다.
+ * 서버가 방 하나를 쓰고, 앱은 열자마자 그 방을 본다.
+ * ══════════════════════════════════════════════════════════════════
  */
-export function newRoom() {
-  const abc = 'abcdefghjkmnpqrstuvwxyz23456789'
-  let out = ''
-  for (let i = 0; i < 6; i++) out += abc[Math.floor(Math.random() * abc.length)]
-  return out
-}
 
-/** 서버에 얹혀 있는 문서. 방이 비어 있으면 null */
-export async function pull(room) {
-  const r = await fetch(`/api/sync?room=${encodeURIComponent(room)}`)
-  if (r.status === 503) throw new Error('아직 서버에 저장소가 연결되지 않았습니다.')
+/** 서버에 얹혀 있는 문서. 아직 아무도 안 올렸으면 null */
+export async function pull() {
+  const r = await fetch('/api/sync')
+  if (r.status === 503) throw new Error('서버 저장소가 연결되지 않았습니다.')
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `불러오지 못했습니다 (${r.status})`)
   return r.json()
 }
 
 /** 지금 것을 올린다. 사진도 함께 — 기기를 옮기면 얼굴도 따라와야 한다 */
-export async function push(room, data) {
+export async function push(data) {
   const body = JSON.stringify({ ...data, photos: loadPhotos(), updatedAt: Date.now() })
-  const r = await fetch(`/api/sync?room=${encodeURIComponent(room)}`, {
+  const r = await fetch('/api/sync', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,

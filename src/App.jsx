@@ -14,7 +14,7 @@ import { roundOutcomes } from './lib/awards.js'
 import { DEFAULT_RANKING, computeStats, fmtDate } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { exportFile, importFile, load, save, normalize } from './lib/storage.js'
-import { applyPhotos, loadRoom, pull, push, saveRoom } from './lib/sync.js'
+import { applyPhotos, pull, push } from './lib/sync.js'
 
 const TABS = [
   { id: 'home', label: '홈' },
@@ -63,78 +63,57 @@ export default function App() {
 
   /*
     ══════════════════════════════════════════════════════════
-    **기기끼리 맞추기.**
+    **기기끼리 맞추기 — 아무것도 안 해도 맞춰진다.**
 
-    연결 코드가 있으면 앱을 열 때 서버에서 받아 오고, 무언가 바뀌면 잠깐
-    기다렸다가 올린다. 늦게 고친 쪽이 이긴다(updatedAt).
+    열면 서버에서 받아 오고, 무언가 바뀌면 잠깐 기다렸다가 올린다. 늦게 고친
+    쪽이 이긴다(updatedAt). 넷이 쓰는 앱이라 방을 나눌 까닭이 없어 서버가
+    방 하나를 쓴다.
 
-    바로 올리지 않고 **1.2초 기다린다** — 홀 표에서 칸을 하나씩 채우는 동안
+    **처음 받아 오기에 성공하기 전에는 절대 안 올린다.** 서버가 잠깐 죽었거나
+    저장소가 안 붙은 기기에서 뭔가 고치면, 그 빈 상태가 남의 기록을 통째로
+    덮어쓴다. 받아 온 적이 없으면 올릴 자격도 없다.
+
+    바로 올리지 않고 1.2초 기다린다 — 홀 표에서 칸을 하나씩 채우는 동안
     글자마다 올리면 스무 번 넘게 오간다. 손이 멈추면 한 번 간다.
-
-    코드가 없으면 아무 일도 안 한다 — 지금까지처럼 이 기기에만 담긴다.
     ══════════════════════════════════════════════════════════
   */
-  const [room, setRoom] = useState(loadRoom)
-  const [syncState, setSyncState] = useState({ kind: room ? 'working' : 'off' })
+  const [syncState, setSyncState] = useState({ kind: 'working' })
+  /** 받아 온 적이 있는가 — 이것이 참이 되기 전에는 올리지 않는다 */
+  const synced = useRef(false)
   const pushTimer = useRef(null)
-  const lastPushed = useRef(0)
 
-  /** 코드를 바꿀 때 — 붙이면 곧바로 받아 오고, 끊으면 그대로 둔다 */
-  const changeRoom = async (next) => {
-    saveRoom(next)
-    setRoom(next)
-    if (!next) { setSyncState({ kind: 'off' }); return }
-    setSyncState({ kind: 'working' })
-    try {
-      const remote = await pull(next)
-      if (remote && Number(remote.updatedAt) > Number(data.updatedAt || 0)) {
-        applyPhotos(remote)
-        setData(normalize(remote))
-      } else {
-        lastPushed.current = await push(next, data)
-      }
-      setSyncState({ kind: 'ok', at: Date.now() })
-    } catch (e) {
-      setSyncState({ kind: 'error', message: e.message })
-    }
-  }
-
-  /* 열 때 한 번 받아 온다 */
   useEffect(() => {
-    if (!room) return
     let alive = true
     ;(async () => {
       try {
-        const remote = await pull(room)
+        const remote = await pull()
         if (!alive) return
         if (remote && Number(remote.updatedAt) > Number(load().updatedAt || 0)) {
           applyPhotos(remote)
           setData(normalize(remote))
         }
+        synced.current = true
         setSyncState({ kind: 'ok', at: Date.now() })
       } catch (e) {
         if (alive) setSyncState({ kind: 'error', message: e.message })
       }
     })()
     return () => { alive = false }
-    // 처음 한 번만 — 코드를 바꾸는 길은 changeRoom 이 따로 맡는다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* 바뀌면 올린다 (손이 멈춘 뒤) */
   useEffect(() => {
-    if (!room) return
+    if (!synced.current) return
     if (pushTimer.current) clearTimeout(pushTimer.current)
     pushTimer.current = setTimeout(async () => {
       try {
-        lastPushed.current = await push(room, data)
+        await push(data)
         setSyncState({ kind: 'ok', at: Date.now() })
       } catch (e) {
         setSyncState({ kind: 'error', message: e.message })
       }
     }, 1200)
     return () => { if (pushTimer.current) clearTimeout(pushTimer.current) }
-  }, [room, data])
+  }, [data])
   /** 순위를 어떻게 매기나 — 핸디 켜기·상한. 화면 전부가 이 하나를 본다 */
   const ranking = data.ranking ?? DEFAULT_RANKING
   const setRanking = (patch) => setData((d) => ({ ...d, ranking: { ...ranking, ...patch } }))
@@ -256,7 +235,7 @@ export default function App() {
             onUpdate={updateRound}
             onDelete={deleteRound}
             onGoInput={() => setTab('input')}
-            sync={<DeviceSync room={room} state={syncState} onRoom={changeRoom} />}
+            sync={<DeviceSync state={syncState} />}
           />
         )}
 

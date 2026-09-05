@@ -47,7 +47,14 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: '동기화 저장소가 아직 연결되지 않았습니다.' })
   }
 
-  const room = String(req.query.room || '')
+  /*
+    **방 이름을 안 받으면 기본 방이다.**
+
+    넷이 쓰는 앱이라 방을 나눌 까닭이 없다. 코드를 만들어 다른 기기에 옮겨
+    적게 했더니 그 한 걸음이 곧 '안 쓰는 이유' 가 됐다 — 열면 바로 맞춰지는
+    것이 이 앱에 맞다. (방 이름을 굳이 나누고 싶으면 ?room= 으로 보낼 수 있다)
+  */
+  const room = String(req.query.room || process.env.SYNC_ROOM || 'nakwon')
   if (!ROOM.test(room)) return res.status(400).json({ error: '연결 코드가 올바르지 않습니다.' })
 
   const key = `nakwon:room:${room.toLowerCase()}`
