@@ -726,6 +726,15 @@ table.data tbody tr:last-child th { border-bottom: 0; }
   padding: 10px 11px;
   width: 100%;
   min-width: 0;
+  /*
+    **칸 키를 못 박는다.**
+
+    날짜·시각 칸은 사파리 기본 모양을 껐더니(-webkit-appearance: none) 값이
+    비었을 때 글자가 없어 납작해졌다 — 티오프만 옆 칸보다 낮게 앉았다.
+    글자가 있든 없든 같은 키가 되게 바닥을 깔아 둔다 (15px × 1.4 + 여백 20 + 테 2).
+  */
+  min-height: 43px;
+  line-height: 1.4;
 }
 .field input:focus {
   outline: 2px solid var(--green);
@@ -1412,9 +1421,19 @@ input[type='time'] {
   text-align: left;
   /* 사파리가 넣는 안쪽 여백을 지운다 — 안 지우면 글자가 한쪽으로 쏠린다 */
   padding-inline: 11px;
+  /* 옆 칸(골프장·코스)과 같은 키로 (.field input 과 같은 값) */
+  min-height: 43px;
 }
-/* 사파리는 값이 비어 있어도 자리를 잡아 둔다 — 그 자리를 우리 글자색으로 */
-input[type='date']::-webkit-date-and-time-value { text-align: left; }
+/*
+  사파리는 값이 비어 있어도 자리를 잡아 둔다. 그 자리가 칸의 키를 정하는데,
+  기본 line-height 라 옆 칸보다 낮았다. 칸 높이를 그대로 채우고 가운데에 놓는다.
+*/
+input[type='date']::-webkit-date-and-time-value,
+input[type='time']::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 21px;
+  line-height: 21px;
+}
 .meta-grid .wide { grid-column: 1 / -1; }
 .field .opt { font-weight: 500; color: var(--ink-3); }
 
