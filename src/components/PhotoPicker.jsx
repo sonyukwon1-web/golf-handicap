@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
-import { fileToSquareDataUrl, loadPhotos, removePhoto, setPhoto } from '../lib/photos.js'
+import { loadImage, loadPhotos, removePhoto, setPhoto } from '../lib/photos.js'
 import MemberAvatar from './MemberAvatar.jsx'
+import PhotoCrop from './PhotoCrop.jsx'
 
 /**
  * 멤버 사진 등록. 홈 화면 맨 아래나 설정 자리에 한 번 두면 된다.
@@ -11,21 +12,33 @@ export default function PhotoPicker({ onChange }) {
   const [photos, setPhotos] = useState(loadPhotos)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
+  /** 지금 맞추고 있는 사진 { member, img } */
+  const [cropping, setCropping] = useState(null)
   const inputs = useRef({})
 
+  /* 고른 사진을 바로 담지 않는다 — 얼굴을 맞추는 창을 한 번 거친다 */
   const pick = async (member, file) => {
     if (!file) return
     setBusy(member)
     setError('')
     try {
-      const dataUrl = await fileToSquareDataUrl(file)
-      const next = setPhoto(member, dataUrl)
-      setPhotos(next)
-      onChange?.(next)
+      setCropping({ member, img: await loadImage(file) })
     } catch (e) {
       setError(e.message)
     } finally {
       setBusy(null)
+    }
+  }
+
+  const save = (dataUrl) => {
+    try {
+      const next = setPhoto(cropping.member, dataUrl)
+      setPhotos(next)
+      onChange?.(next)
+      setCropping(null)
+    } catch (e) {
+      setError(e.message)
+      setCropping(null)
     }
   }
 
@@ -77,6 +90,15 @@ export default function PhotoPicker({ onChange }) {
           </div>
         ))}
       </div>
+
+      {cropping && (
+        <PhotoCrop
+          member={cropping.member}
+          img={cropping.img}
+          onDone={save}
+          onCancel={() => setCropping(null)}
+        />
+      )}
     </div>
   )
 }
