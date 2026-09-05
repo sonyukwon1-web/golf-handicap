@@ -52,8 +52,9 @@
     --line-strong: #3b4d3f;
 
     --ink: #eef4ef;
-    --ink-2: #b2c2b6;
-    --ink-3: #86988b;
+    --ink-2: #c3d1c6;
+    /* 어두운 바탕(#18201a)에서 7.3:1 — 밝은 모드와 같은 무게로 읽힌다 */
+    --ink-3: #9db0a2;
 
     --green: #57b877;
     --green-strong: #7fd199;
@@ -136,8 +137,13 @@
   --line-strong: #cbd8c2;
 
   --ink: #14251b;
-  --ink-2: #5b7a64;
-  --ink-3: #96a89a;
+  /*
+    흐린 글자도 **읽혀야 한다.** #96a89a 는 흰 바탕에서 대비 2.5:1 이라
+    그래프 밑 골프장 이름·눈금이 배경에 묻혔다. 4.5:1 을 넘기는 값으로 올린다
+    (측정: --ink-2 4.8:1 · --ink-3 4.6:1, 옅은 바탕 #f7fbf4 기준).
+  */
+  --ink-2: #4d6656;
+  --ink-3: #5e7566;
 
   /* 프라이머리 = 그린, 축하·1위 전용 = 골드. 두 색만 씁니다 */
   --primary: #1baf7a;
@@ -176,8 +182,9 @@
     --line-strong: #3b4d3f;
 
     --ink: #eef4ef;
-    --ink-2: #b2c2b6;
-    --ink-3: #86988b;
+    --ink-2: #c3d1c6;
+    /* 어두운 바탕(#18201a)에서 7.3:1 — 밝은 모드와 같은 무게로 읽힌다 */
+    --ink-3: #9db0a2;
 
     --primary: #199e70;
     --primary-2: #28c78d;
@@ -409,7 +416,7 @@ main.shell { padding-top: 20px; }
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease;
 }
-.toggle.on { color: var(--ink-1); }
+.toggle.on { color: var(--ink); }
 .toggle.on i { background: var(--green); }
 .toggle.on i::after { transform: translateX(16px); }
 
@@ -562,6 +569,7 @@ table.data th, table.data td {
   padding: 8px 10px;
   text-align: right;
   white-space: nowrap;
+  vertical-align: top;
   border-bottom: 1px solid var(--line);
 }
 table.data th { font-size: 12px; color: var(--ink-3); font-weight: 600; }
@@ -1066,18 +1074,25 @@ table.data td.worst { color: var(--ink-3); }
 input[data-warn] { border-color: var(--warn, #b26a00); }
 
 .rival-card { padding: 14px; }
+/* 골프장 이름이 줄바꿈할 수 있게 그 칸만 nowrap 을 푼다 */
+.rival-card table.data th[scope='row'] { white-space: normal; }
 
-/* 맞대결 표의 날짜 밑에 붙는 골프장 이름 — 날짜보다 한 단계 물러선다 */
+/*
+  맞대결 표의 날짜 밑에 붙는 골프장 이름 — 날짜보다 한 단계 물러선다.
+
+  **자르지 않는다.** 12자에서 `…` 로 잘랐더니 '롯데스카이힐…' 이 되어 어느
+  골프장인지 알 수 없었다. 이름을 반쯤 보여 주는 것은 안 보여 주는 것과 같다.
+  줄을 바꿔서라도 다 적는다.
+*/
 .rival-course {
   display: block;
   margin-top: 2px;
   font-size: 11.5px;
   font-weight: 400;
   color: var(--ink-3);
-  /* 이름이 길면 줄이 바뀌는 대신 잘린다 — 표가 옆으로 늘어나면 승자 칸이 밀린다 */
-  max-width: 12ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: keep-all;
+  max-width: 14ch;
 }
 
 .rival-pick {
@@ -1522,12 +1537,13 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
   margin: 1px 0 0;
   font-size: 12px;
   font-weight: 700;
-  color: var(--ink-1);
-  /* 길면 줄이 바뀌는 대신 잘린다 — 한 칸만 키가 커지면 줄이 들쭉날쭉해진다 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--ink);
+  /* 길면 줄을 바꾼다 — 잘라 놓으면 어느 골프장인지 알 수 없다 */
+  white-space: normal;
+  word-break: keep-all;
 }
+/* 네 칸의 키를 맞춘다 — 한 칸만 두 줄이 되어도 줄이 들쭉날쭉해지지 않는다 */
+.picker-card { align-items: stretch; }
 /* 못 읽은 칸은 값처럼 보이면 안 된다 */
 .picker-card dd[data-unread] { color: var(--ink-3); font-weight: 600; }
 
@@ -1594,7 +1610,7 @@ table.map-card .t { font-weight: 750; }
 table.map-card .ov { font-weight: 700; color: var(--ink-2); }
 /* 합계 줄 — 위 두 줄을 더한 것이라 한 단계 진하게 */
 table.map-card tr.sum th, table.map-card tr.sum td { border-bottom: 0; padding-top: 5px; }
-table.map-card tr.sum .ov, table.map-card tr.sum .t { font-size: 12.5px; font-weight: 800; color: var(--ink-1); }
+table.map-card tr.sum .ov, table.map-card tr.sum .t { font-size: 12.5px; font-weight: 800; color: var(--ink); }
 table.map-card td.miss { color: var(--ink-3); }
 table.map-card td.under { color: var(--series-1); font-weight: 750; }
 table.map-card td.blowup { color: var(--danger); }

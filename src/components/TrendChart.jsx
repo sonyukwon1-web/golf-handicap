@@ -1,15 +1,28 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { MEMBER_COLORS, fmtAvg, fmtDateShort, sortRounds, trendSeries } from '../lib/handicap.js'
 
-/* 아래 여백은 두 줄(날짜 + 골프장)을 받는다 */
-const PAD = { top: 14, right: 56, bottom: 40, left: 34 }
-const HEIGHT = 234
+/* 아래 여백은 세 줄(날짜 + 골프장 두 줄)을 받는다 */
+const PAD = { top: 14, right: 56, bottom: 50, left: 34 }
+const HEIGHT = 244
 
-/** 골프장 이름은 가로 라벨이라 길면 잘라 쓴다 */
-const shortCourse = (name) => {
+/**
+ * 골프장 이름을 x축 라벨로 — **자르지 않고 두 줄로 나눈다.**
+ *
+ * '롯데스카이힐…' 처럼 잘라 놓으면 어느 골프장인지 알 수 없다. 이름을 반쯤
+ * 보여 주는 것은 안 보여 주는 것과 같다. 띄어쓰기가 있으면 거기서, 없으면
+ * 한가운데에서 나눈다. 두 줄로도 안 되는 아주 긴 이름만 끝을 접는다.
+ */
+const courseLines = (name) => {
   const t = (name || '').trim()
-  if (!t) return ''
-  return t.length > 6 ? `${t.slice(0, 6)}…` : t
+  if (!t) return []
+  if (t.length <= 7) return [t]
+
+  const space = t.lastIndexOf(' ', Math.ceil(t.length / 2) + 2)
+  const cut = space > 1 ? space : Math.ceil(t.length / 2)
+  const head = t.slice(0, cut).trim()
+  let tail = t.slice(space > 1 ? cut + 1 : cut).trim()
+  if (tail.length > 9) tail = `${tail.slice(0, 8)}…`
+  return [head, tail]
 }
 
 function useWidth() {
@@ -165,12 +178,14 @@ export default function TrendChart({ rounds }) {
           {/* 날짜 밑에 골프장 — 어느 날 어디서 친 라운드인지 그래프에서 바로 읽힌다 */}
           {xLabels.map((i) => (
             <text key={i} x={xOf(i + 1)} textAnchor="middle" fill="var(--ink-3)">
-              <tspan x={xOf(i + 1)} y={HEIGHT - 22} fontSize="10.5">
+              <tspan x={xOf(i + 1)} y={HEIGHT - 34} fontSize="10.5">
                 {fmtDateShort(sorted[i].date)}
               </tspan>
-              <tspan x={xOf(i + 1)} y={HEIGHT - 9} fontSize="9.5">
-                {shortCourse(sorted[i].course)}
-              </tspan>
+              {courseLines(sorted[i].course).map((line, k) => (
+                <tspan key={k} x={xOf(i + 1)} y={HEIGHT - 21 + k * 11} fontSize="9.5">
+                  {line}
+                </tspan>
+              ))}
             </text>
           ))}
 
