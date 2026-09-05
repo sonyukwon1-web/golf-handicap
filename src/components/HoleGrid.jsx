@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { MEMBERS } from '../lib/handicap.js'
-import { FRONT, HOLES, grossOf, parTotal, verifyRow } from '../lib/holes.js'
+import { FRONT, HOLES, grossOf, overTotal, parTotal, verifyRow } from '../lib/holes.js'
 
 const NINES = [
   { key: 'front', label: '전반', from: 0, to: FRONT },
@@ -9,11 +9,42 @@ const NINES = [
 
 /** 화면에 보여줄 문자열 ↔ 저장할 숫자 */
 const toText = (v) => (v === null || v === undefined ? '' : String(v))
+const fmtOver = (v) => (v > 0 ? `+${v}` : String(v))
 const toValue = (text) => {
   const t = text.trim()
   if (t === '' || t === '-') return null
   const n = Number(t)
   return Number.isFinite(n) ? Math.round(n) : null
+}
+
+/**
+ * 한 칸.
+ *
+ * 값을 숫자로만 들고 있으면 "-" 를 치는 순간 숫자가 아니라서 칸이 비워진다.
+ * 그래서 버디·이글을 아예 칠 수 없었다. 치는 동안에는 글자를 그대로 두고,
+ * 칸에서 손을 뗐을 때만 바깥 값과 맞춘다.
+ */
+function Cell({ value, onChange, className, ...rest }) {
+  const [text, setText] = useState(() => toText(value))
+  const [editing, setEditing] = useState(false)
+
+  if (!editing && text !== toText(value)) setText(toText(value))
+
+  return (
+    <input
+      {...rest}
+      className={className}
+      value={text}
+      onFocus={(e) => { setEditing(true); rest.onFocus?.(e); e.target.select() }}
+      onBlur={() => { setEditing(false); setText(toText(value)) }}
+      onChange={(e) => {
+        const raw = e.target.value
+        if (!/^-?\d{0,2}$/.test(raw)) return // 숫자와 맨 앞 - 만 받는다
+        setText(raw)
+        onChange(raw)
+      }}
+    />
+  )
 }
 
 /**
@@ -25,7 +56,10 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
   const [focused, setFocused] = useState(null) // { member | 'par', index }
   const refs = useRef({})
 
-  const members = playerOrder || MEMBERS
+  // 카드마다 이름 순서가 다르다. 읽어낸 순서가 있으면 그대로 따라간다.
+  const members = playerOrder?.length
+    ? [...playerOrder, ...MEMBERS.filter((m) => !playerOrder.includes(m))]
+    : MEMBERS
 
   const setPar = (i, text) => {
     const next = [...pars]
@@ -39,24 +73,13 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
     onChange({ pars, overs: { ...overs, [m]: row } })
   }
 
-  /** 마지막으로 만진 칸의 부호를 뒤집는다. 휴대폰 숫자 키패드에는 − 가 없다. */
-  const flipSign = () => {
-    if (!focused) return
-    const { row, index } = focused
-    if (row === 'par') return
-    const current = overs[row]?.[index]
-    if (!Number.isFinite(current) || current === 0) return
-    setOver(row, index, String(-current))
-    refs.current[`${row}-${index}`]?.focus()
-  }
-
   const cellProps = (key, row, index) => ({
     ref: (el) => { refs.current[key] = el },
     type: 'text',
     inputMode: 'numeric',
     autoComplete: 'off',
     maxLength: 3,
-    onFocus: (e) => { setFocused({ row, index }); e.target.select() },
+    onFocus: () => setFocused({ row, index }),
   })
 
   const verdicts = Object.fromEntries(
@@ -66,10 +89,9 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
   return (
     <div className="hole-grid">
       <div className="grid-toolbar">
-        <span className="grid-hint">칸에는 <b>파 대비 오버</b>를 넣으세요 (0 = 파, -1 = 버디)</span>
-        <button type="button" className="btn sm" onClick={flipSign} disabled={!focused || focused.row === 'par'}>
-          ± 부호
-        </button>
+        <span className="grid-hint">
+          칸에는 <b>파 대비 오버</b>를 넣으세요. 0 = 파, 1 = 보기, <b>-1 = 버디</b>, -2 = 이글.
+        </span>
       </div>
 
       {NINES.map(({ key, label, from, to }) => (
@@ -83,6 +105,7 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                   <th scope="col" key={k}>{from + k + 1}</th>
                 ))}
                 <th scope="col" className="tcol">T</th>
+                <th scope="col" className="ocol" title="파 대비 오버 합계">±</th>
               </tr>
             </thead>
             <tbody>
@@ -92,16 +115,17 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                   const i = from + k
                   return (
                     <td key={i}>
-                      <input
+                      <Cell
                         {...cellProps(`par-${i}`, 'par', i)}
-                        value={toText(pars[i])}
-                        onChange={(e) => setPar(i, e.target.value)}
+                        value={pars[i]}
+                        onChange={(text) => setPar(i, text)}
                         aria-label={`${i + 1}번 홀 파`}
                       />
                     </td>
                   )
                 })}
                 <td className="tcol">{parTotal(pars, from, to) || ''}</td>
+                <td className="ocol" />
               </tr>
 
               {members.map((m) => {
@@ -115,10 +139,10 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                       const v = overs[m]?.[i]
                       return (
                         <td key={i}>
-                          <input
+                          <Cell
                             {...cellProps(`${m}-${i}`, m, i)}
-                            value={toText(v)}
-                            onChange={(e) => setOver(m, i, e.target.value)}
+                            value={v}
+                            onChange={(text) => setOver(m, i, text)}
                             className={v < 0 ? 'under' : v >= 3 ? 'blowup' : ''}
                             aria-label={`${m} ${i + 1}번 홀 오버 타수`}
                           />
@@ -126,6 +150,7 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                       )
                     })}
                     <td className="tcol">{filled > 0 ? strokes : ''}</td>
+                    <td className="ocol">{filled > 0 ? fmtOver(overTotal(overs[m], from, to)) : ''}</td>
                   </tr>
                 )
               })}

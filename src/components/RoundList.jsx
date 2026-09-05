@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { MEMBERS, computeRoundDetails, fmtDate } from '../lib/handicap.js'
-import { FRONT, HOLES, grossOf, hasHoleData, parTotal } from '../lib/holes.js'
+import { FRONT, HOLES, grossOf, hasHoleData, overTotal, parTotal } from '../lib/holes.js'
+
+const fmtOver = (v) => (v > 0 ? `+${v}` : String(v))
 import RoundFields from './RoundFields.jsx'
 
 const NINES = [
@@ -10,7 +12,11 @@ const NINES = [
 
 /** 저장된 홀별 기록을 읽기 전용 표로 보여준다 */
 function HoleTable({ round }) {
-  const players = MEMBERS.filter((m) => (round.holes?.[m] || []).some((v) => Number.isFinite(v)))
+  const has = (m) => (round.holes?.[m] || []).some((v) => Number.isFinite(v))
+  // 카드에 적혀 있던 순서를 그대로 따른다
+  const players = (round.order?.length ? round.order : MEMBERS).filter(has)
+    .concat(MEMBERS.filter((m) => has(m) && !(round.order || []).includes(m)))
+    .filter((m, i, a) => a.indexOf(m) === i)
 
   return (
     <details className="round-holes">
@@ -28,6 +34,7 @@ function HoleTable({ round }) {
                 <th scope="col" className="rowhead">HOLE</th>
                 {Array.from({ length: to - from }, (_, k) => <th scope="col" key={k}>{from + k + 1}</th>)}
                 <th scope="col" className="tcol">T</th>
+                <th scope="col" className="ocol" title="파 대비 오버 합계">±</th>
               </tr>
             </thead>
             <tbody>
@@ -35,6 +42,7 @@ function HoleTable({ round }) {
                 <th scope="row" className="rowhead">PAR</th>
                 {Array.from({ length: to - from }, (_, k) => <td key={k}>{round.pars[from + k]}</td>)}
                 <td className="tcol">{parTotal(round.pars, from, to)}</td>
+                <td className="ocol" />
               </tr>
               {players.map((m) => (
                 <tr key={m}>
@@ -48,6 +56,7 @@ function HoleTable({ round }) {
                     )
                   })}
                   <td className="tcol">{grossOf(round.pars, round.holes[m], from, to).strokes}</td>
+                  <td className="ocol">{fmtOver(overTotal(round.holes[m], from, to))}</td>
                 </tr>
               ))}
             </tbody>

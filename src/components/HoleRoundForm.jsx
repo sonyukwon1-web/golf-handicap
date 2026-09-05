@@ -16,6 +16,7 @@ const blank = () => ({
   teeTime: '',
   pars: emptyPars(),
   overs: Object.fromEntries(MEMBERS.map((m) => [m, emptyOvers()])),
+  order: [...MEMBERS],
 })
 
 /** 스코어카드 그대로 한 라운드를 홀별로 적는다. OCR 결과도 여기로 들어온다. */
@@ -27,7 +28,7 @@ export default function HoleRoundForm({ onSave, stats }) {
 
   const setMeta = (patch) => { setDraft((d) => ({ ...d, ...patch })); setError('') }
 
-  const applyOcr = ({ meta, pars, overs, claimedTotals: claimed }) => {
+  const applyOcr = ({ meta, pars, overs, order, claimedTotals: claimed }) => {
     setDraft((d) => ({
       ...d,
       date: meta.date || d.date,
@@ -35,6 +36,7 @@ export default function HoleRoundForm({ onSave, stats }) {
       courseFront: meta.courseFront || d.courseFront,
       courseBack: meta.courseBack || d.courseBack,
       teeTime: meta.teeTime || d.teeTime,
+      order: order?.length ? order : d.order,
       pars: pars.map((v, i) => (Number.isFinite(v) ? v : d.pars[i])),
       // 지정된 사람만 채우고 나머지는 비운다. 지정을 바꿨을 때 옛 값이 남으면 안 된다.
       overs: Object.fromEntries(
@@ -75,6 +77,7 @@ export default function HoleRoundForm({ onSave, stats }) {
       courseBack: draft.courseBack.trim(),
       teeTime: draft.teeTime.trim(),
       pars: [...draft.pars],
+      order: draft.order.filter((m) => played.includes(m)),
       holes,
       scores,
       penalty: null,
@@ -130,6 +133,7 @@ export default function HoleRoundForm({ onSave, stats }) {
         </div>
 
         <HoleGrid
+          playerOrder={draft.order}
           value={{ pars: draft.pars, overs: draft.overs }}
           onChange={({ pars, overs }) => { setDraft((d) => ({ ...d, pars, overs })); setError('') }}
           claimedTotals={claimedTotals}

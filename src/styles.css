@@ -1337,3 +1337,15 @@ input#scorecard-file:focus-visible + .dropzone {
   outline: 2px solid var(--green);
   outline-offset: 2px;
 }
+
+/* 파 대비 오버 합계 열 */
+table.score-grid .ocol {
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 34px;
+  color: var(--ink-2);
+  border-right: 0;
+}
+table.score-grid .par-row .ocol { background: var(--green-soft); }
+table.score-grid .tcol { border-right: 1px solid var(--line); }

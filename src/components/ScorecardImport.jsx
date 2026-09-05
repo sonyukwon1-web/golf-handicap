@@ -136,6 +136,8 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
     })
 
     onDraft({
+      // 카드마다 이름 순서가 다르다. 표도 그 순서를 따라가게 한다.
+      order: card.rows.map((_, i) => assign[i]).filter(Boolean),
       meta: {
         date: card.date,
         course: card.course,

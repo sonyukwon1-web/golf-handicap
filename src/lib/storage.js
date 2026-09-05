@@ -75,6 +75,11 @@ export function normalize(raw) {
 
       const str = (v) => (typeof v === 'string' ? v.trim() : '')
 
+      // 카드에 적혀 있던 이름 순서 (없으면 기본 순서를 쓴다)
+      const order = Array.isArray(r.order)
+        ? [...new Set(r.order.filter((m) => MEMBERS.includes(m)))]
+        : null
+
       return {
         id: typeof r.id === 'string' && r.id ? r.id : newId(),
         date: r.date,
@@ -84,6 +89,7 @@ export function normalize(raw) {
         courseBack: str(r.courseBack),
         pars,
         holes,
+        order: order && order.length ? order : null,
         scores,
         createdAt: Number.isFinite(Number(r.createdAt)) ? Number(r.createdAt) : i,
         penalty,
