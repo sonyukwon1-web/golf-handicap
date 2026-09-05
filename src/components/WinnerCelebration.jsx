@@ -21,7 +21,6 @@ export default function WinnerCelebration({ round, onClose }) {
         <h2 id="winner-title" style={{ font: '800 26px/1.2 Pretendard, sans-serif', color: 'var(--ink)', letterSpacing: '-.03em', margin: '4px 0 2px' }}>
           오늘의 시상식 🎉
         </h2>
-        <p className="hint" style={{ margin: 0 }}>친 타수 그대로</p>
 
         {/* 시상대와 벙커는 랭킹 화면과 **같은 부품**을 쓴다 (Podium) */}
         <Podium round={round} />

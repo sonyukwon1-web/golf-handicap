@@ -31,7 +31,7 @@ function HoleAwards({ rounds, period }) {
     <div className="card fame-card">
       <div className="fame-head">
         <h3>📋 홀별 기록 통계</h3>
-        <span className="hint">{period ? `${period} · ${s.rounds}라운드` : `${s.rounds}라운드 홀별 기준`}</span>
+        {period && <span className="hint">{period}</span>}
       </div>
 
       <ul className="hole-awards">
@@ -110,7 +110,12 @@ function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS
   )
 }
 
-export default function HallOfFame({ rounds, period }) {
+/**
+ * @param 통산  1등·꼴찌 횟수를 보여줄지. 라운드 하나를 골라 볼 때는 끈다 —
+ *             바로 위 시상대가 이미 그 날 등수를 세워 놓았는데, 그 밑에
+ *             '1등 횟수 1승' 을 또 적으면 같은 말을 두 번 하는 것이다.
+ */
+export default function HallOfFame({ rounds, period, 통산 = true }) {
   const rec = memberRecords(rounds)
   const photos = loadPhotos()
   const played = MEMBERS.filter((m) => rec[m].played > 0)
@@ -129,21 +134,25 @@ export default function HallOfFame({ rounds, period }) {
 
   return (
     <>
-      <Ranking
-        title="명예의 전당" hint={period ? `${period} · 1등 횟수` : '1등 횟수'} icon="👑" tone="fame-good"
-        rows={wins} valueKey="wins" unit="승" photos={photos}
-      />
-      <Ranking
-        title="흑역사관" hint={period ? `${period} · 꼴찌 횟수` : '꼴찌 횟수'} icon="🫠" tone="fame-bad"
-        rows={lasts} valueKey="lasts" unit="회" marks={SHAME} photos={photos}
-      />
+      {통산 && (
+        <>
+          <Ranking
+            title="명예의 전당" hint={period ? `${period} · 1등` : '1등 횟수'} icon="👑" tone="fame-good"
+            rows={wins} valueKey="wins" unit="승" photos={photos}
+          />
+          <Ranking
+            title="흑역사관" hint={period ? `${period} · 꼴찌` : '꼴찌 횟수'} icon="🫠" tone="fame-bad"
+            rows={lasts} valueKey="lasts" unit="회" marks={SHAME} photos={photos}
+          />
+        </>
+      )}
 
       <HoleAwards rounds={rounds} period={period} />
 
       <div className="card fame-card">
         <div className="fame-head">
           <h3>⛳ 개인 기록</h3>
-          <span className="hint">{period || '친 타수 기준'}</span>
+          {period && <span className="hint">{period}</span>}
         </div>
         <div className="table-scroll">
           <table className="data">

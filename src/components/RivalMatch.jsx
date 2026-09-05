@@ -29,7 +29,7 @@ export default function RivalMatch({ rounds, period }) {
       <div className="fame-head">
         <h3>⚔️ 라이벌 매치</h3>
         {/* 무엇을 보고 있는지 — 셈만 기간을 따르고 이름은 그대로면 알 길이 없다 */}
-        <span className="hint">{period || '친 타수 기준'}</span>
+        {period && <span className="hint">{period}</span>}
       </div>
 
       <div className="rival-pick">

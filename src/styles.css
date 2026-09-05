@@ -554,34 +554,43 @@ main.shell { padding-top: 20px; }
 }
 .hd-name { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700; }
 
-.hd-stat {
+/*
+  평균·핸디 두 칸 — **폭과 글자 크기가 같아야** 네 줄의 숫자가 세로로 선다.
+  폭을 안 정해 두면 90 과 117 처럼 자릿수가 다를 때 칸이 들쭉날쭉해진다.
+*/
+.hd-cell {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 52px;
   white-space: nowrap;
 }
-.hd-stat b { font-size: 13px; font-weight: 700; color: var(--ink-2); }
-.hd-stat em { font-style: normal; }
-
-/* 빼주는 타수 — 이 줄에서 가장 큰 글자다. 기준자(0)는 물러선다 */
-.hd-num {
-  min-width: 46px;
-  text-align: right;
-  font-size: 26px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--green-ink, var(--green));
+.hd-cell em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
 }
-.hd-num[data-base] { color: var(--ink-3); font-weight: 700; }
+.hd-cell b {
+  font: 700 21px Oswald, sans-serif;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* 두 칸을 가르는 세로줄 */
+.hd-cell-cut { border-left: 1px solid var(--line); padding-left: 12px; margin-left: 2px; }
+/* 빼주는 타수 — 초록. 기준자(0)는 물러선다 */
+.hd-cell .hd-num { color: var(--green-ink, var(--green)); }
+.hd-cell[data-base] .hd-num { color: var(--ink-3); }
 
-/* 아주 좁은 화면에서는 평균·라운드를 이름 아래로 내린다 */
+/* 아주 좁은 화면에서는 두 칸을 조금 좁힌다 — 자리를 옮기면 오와열이 깨진다 */
 @media (max-width: 360px) {
-  .hd-row { grid-template-columns: auto 1fr auto; }
-  .hd-stat { grid-column: 2; grid-row: 2; }
+  .hd-cell { min-width: 44px; }
+  .hd-cell b { font-size: 19px; }
+  .hd-cell-cut { padding-left: 9px; }
+  .hd-row { gap: 8px; }
 }
 
 /* ── 차트 ─────────────────────────────────────────────── */
@@ -1311,16 +1320,28 @@ input[data-warn] { border-color: var(--warn, #b26a00); }
   font-weight: 600;
   color: var(--ink-2);
 }
+/*
+  **고를 수 있는 것처럼 보여야 한다.**
+
+  카드와 똑같은 흰 바탕에 얇은 선만 둘렀더니 그냥 글씨가 적힌 줄로 읽혀,
+  누를 수 있는 줄을 몰랐다. 아주 옅은 초록만 얹고 테두리를 한 톤 진하게
+  한다 — 앱의 초록을 그대로 쓰므로 튀지 않으면서 '여기는 손대는 자리' 라는
+  것은 전해진다.
+*/
 .period-pick select {
   flex: 1;
   min-width: 0;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
+  background: var(--green-soft);
+  border: 1px solid var(--green);
+  color: var(--green-ink);
   border-radius: var(--radius-sm);
   padding: 9px 11px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
 }
+.period-pick select:hover { filter: brightness(1.04); }
+.period-pick select:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
 
 .avg-board { list-style: none; margin: 0; padding: 4px 0; }
 .avg-board li {

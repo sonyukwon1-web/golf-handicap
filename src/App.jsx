@@ -355,7 +355,8 @@ export default function App() {
         {tab === 'fame' && (
           <section className="section fame-stack">
             <div className="section-head">
-              <h2>명예의 전당 &amp; 흑역사관</h2>
+              {/* 통산 순위를 안 보여줄 때 그 이름을 머리에 달아 두면 거짓말이 된다 */}
+              <h2>{평균보기 ? '명예의 전당 & 흑역사관' : '라운드 기록'}</h2>
               {/* 늘 '5라운드 누적' 이라 적혀 있었다 — 무엇을 골랐든 같은 말이었다 */}
               <span className="hint">{기간이름}</span>
             </div>
@@ -363,7 +364,6 @@ export default function App() {
 
             {/* 무엇을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
             <label className="period-pick">
-              <span>보기</span>
               {/*
                 평균이 위, 라운드 하나하나가 아래. 여럿을 묶어 보는 것이 먼저
                 눈에 들어와야 한다 — 날짜 목록은 길어서 아래에 두어도 찾기 쉽다.
@@ -410,7 +410,7 @@ export default function App() {
               <div className="card podium-card">
                 <div className="fame-head">
                   <h3>🏆 {본기간 === 'last5' ? '최근 5개 라운드' : `${본기간}년`} 평균</h3>
-                  <span className="hint">{기간라운드.length}라운드 · 친 타수 그대로</span>
+                  <span className="hint">{기간라운드.length}라운드</span>
                 </div>
                 <Podium round={평균순위} compact />
               </div>
@@ -418,7 +418,7 @@ export default function App() {
 
             {평균순위 && <AverageBoard rounds={사람별5 ? rounds : 기간라운드} perMember={사람별5} />}
 
-            <HallOfFame rounds={기간라운드} period={기간이름} />
+            <HallOfFame rounds={기간라운드} period={기간이름} 통산={평균보기} />
             <RivalMatch rounds={기간라운드} period={기간이름} />
           </section>
         )}

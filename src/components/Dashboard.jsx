@@ -62,13 +62,26 @@ function HandicapRow({ s, slot, badges, photos }) {
           </ul>
         )}
       </div>
-      <span className="hd-stat">
-        평균 <b>{fmtAvg(s.average)}</b>
-        <em>{s.total}R</em>
+      {/*
+        ══════════════════════════════════════════════════════════
+        **두 수는 같은 모양의 칸에 나란히 선다.**
+
+        오른쪽 큰 숫자가 무엇인지 아무 데도 적혀 있지 않았다 — 옆의 `5R` 이
+        이름표처럼 붙어 있어서 되레 그것이 설명인 줄 읽혔다. `5R` 은 카드
+        제목('최근 5라운드 평균점수')이 이미 말하고 있으니 뺀다.
+
+        평균과 핸디를 **같은 크기·같은 폭**으로 두고 사이에 세로줄을 넣는다.
+        크기를 달리하면 줄마다 숫자의 밑선이 어긋나 오와열이 깨진다.
+        ══════════════════════════════════════════════════════════
+      */}
+      <span className="hd-cell">
+        <em>평균</em>
+        <b>{fmtAvg(s.average)}</b>
       </span>
-      <span className="hd-num" data-base={s.isBase || undefined}>
+      <span className="hd-cell hd-cell-cut" data-base={s.isBase || undefined}>
+        <em>핸디</em>
         {/* 빼기표를 붙였더니 '−6점' 처럼 읽혀 되레 헷갈렸다 — 숫자만 적는다 */}
-        {s.handicap === null ? '–' : s.handicap}
+        <b className="hd-num">{s.handicap === null ? '–' : s.handicap}</b>
       </span>
      </div>
       {/*
