@@ -66,6 +66,8 @@ export default function TrendChart({ rounds }) {
   const [wrapRef, width] = useWidth()
   const color = useSeriesColors()
   const [hover, setHover] = useState(null)
+  /** 눌러서 붙잡아 둔 자리 — 손을 떼도 안 사라진다 */
+  const [pinned, setPinned] = useState(null)
   const [showTable, setShowTable] = useState(false)
 
   const sorted = sortRounds(rounds)
@@ -81,7 +83,17 @@ export default function TrendChart({ rounds }) {
   const yMin = Math.floor((rawMin - pad) / 5) * 5
   const yMax = Math.ceil((rawMax + pad) / 5) * 5
 
-  const w = Math.max(width, 280)
+  /*
+    ══════════════════════════════════════════════════════════
+    **라운드가 늘어도 좁혀 넣지 않는다.**
+
+    화면 폭에 맞춰 다 밀어 넣었더니 열 번을 넘어가면서 점 사이가 붙어,
+    선이 뭉개지고 날짜 라벨도 거의 다 솎여 나갔다. 한 라운드에 70px 을
+    보장하고, 넘치면 그래프를 가로로 늘려 굴려 보게 한다.
+    ══════════════════════════════════════════════════════════
+  */
+  const PER_ROUND = 70
+  const w = Math.max(width, 280, PAD.left + PAD.right + Math.max(0, n - 1) * PER_ROUND)
   const innerW = Math.max(1, w - PAD.left - PAD.right)
   const innerH = HEIGHT - PAD.top - PAD.bottom
 
@@ -137,9 +149,24 @@ export default function TrendChart({ rounds }) {
     return best
   }
 
+  /*
+    **누르면 머문다.**
+
+    갖다 댄 채로만 보이니 손을 떼는 순간 사라져, 값을 옮겨 적거나 남에게
+    보여 줄 수가 없었다. 휴대폰에는 '갖다 대기' 자체가 없어 한 번 누르고
+    떼면 그대로 사라졌다. 누른 자리는 다시 누르거나 빈 곳을 누를 때까지 남는다.
+  */
   const onMove = (e) => {
+    if (pinned) return
     const rect = e.currentTarget.getBoundingClientRect()
     setHover(pick(e.clientX, rect))
+  }
+
+  const onTap = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const at = pick(e.clientX, rect)
+    if (pinned === at) { setPinned(null); setHover(null) }
+    else { setPinned(at); setHover(at) }
   }
 
   const hoverRows = hover
@@ -167,8 +194,8 @@ export default function TrendChart({ rounds }) {
         className="chart-wrap"
         ref={wrapRef}
         onPointerMove={onMove}
-        onPointerDown={onMove}
-        onPointerLeave={() => setHover(null)}
+        onPointerDown={onTap}
+        onPointerLeave={() => { if (!pinned) setHover(null) }}
       >
         <svg viewBox={`0 0 ${w} ${HEIGHT}`} width={w} height={HEIGHT} role="img"
              aria-label="멤버별 최근 5경기 평균 타수 추이">

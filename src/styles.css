@@ -552,8 +552,18 @@ main.shell { padding-top: 20px; }
 
 /* ── 차트 ─────────────────────────────────────────────── */
 .chart-card { padding: 14px 12px 10px; }
-.chart-wrap { position: relative; touch-action: pan-y; }
-.chart-wrap svg { display: block; width: 100%; }
+/*
+  라운드가 늘면 그래프가 가로로 자란다 — 좁혀 넣는 대신 굴려 본다.
+  세로로 굴리는 것은 그대로 두고(pan-y) 가로만 이 상자가 받는다.
+*/
+.chart-wrap {
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+.chart-wrap svg { display: block; }
 
 .legend {
   display: flex;

@@ -27,22 +27,22 @@ export default function RankOptions({ ranking, onRanking, stats, members = [] })
         <span>핸디 적용해서 순위 보기</span>
       </button>
 
+      {/*
+        **골라 넣는다.** 숫자 칸이었더니 휴대폰에서 숫자판이 떴다 닫혔다 하고,
+        54 같은 뜻 없는 값도 들어갔다. 쓸 만한 범위(1~15타)만 목록으로 세운다.
+      */}
       <label className="cap">
         <span>상한</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min="0"
-          max="54"
-          placeholder="없음"
+        <select
+          className="compact"
           value={ranking.cap ?? ''}
-          onChange={(e) => {
-            const v = e.target.value.trim()
-            const n = Number(v)
-            onRanking({ cap: v === '' || !Number.isFinite(n) || n < 0 ? null : Math.round(n) })
-          }}
-        />
-        <span className="unit">타</span>
+          onChange={(e) => onRanking({ cap: e.target.value === '' ? null : Number(e.target.value) })}
+        >
+          <option value="">없음</option>
+          {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => (
+            <option key={n} value={n}>{n}타</option>
+          ))}
+        </select>
       </label>
 
       {/*
@@ -61,7 +61,7 @@ export default function RankOptions({ ranking, onRanking, stats, members = [] })
           {깎임.map(({ member, handicap, isBase }) => (
             <li key={member} data-base={isBase || undefined}>
               <span>{member}</span>
-              <b>{handicap === 0 ? '0' : `−${handicap}`}</b>
+              <b>{handicap}</b>
             </li>
           ))}
         </ul>
