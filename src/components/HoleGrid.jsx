@@ -105,6 +105,15 @@ export default function HoleGrid({ value, onChange, claimedTotals, claimedNines,
     from, to,
   )
 
+  /**
+   * **사진에서 읽어 온 줄인가.**
+   *
+   * 빈 칸을 빨갛게 칠하는 것은 '카드에는 값이 있는데 못 읽었다' 는 뜻이다.
+   * 그런데 손으로 적으려고 연 빈 표에도 그대로 칠해서, 아직 아무것도 안 했는데
+   * 표 전체가 새빨갰다. 견줄 카드가 있을 때만 칠한다.
+   */
+  const 카드줄 = (m) => claimedNines?.[m] != null
+
   return (
     <div className="hole-grid">
       <div className="grid-toolbar">
@@ -155,7 +164,8 @@ export default function HoleGrid({ value, onChange, claimedTotals, claimedNines,
 
               {members.map((m) => {
                 const bad = verdicts[m]?.ok === false
-                const nv = nine(m, from, to)
+                const 읽어온줄 = 카드줄(m)
+                const nv = 읽어온줄 ? nine(m, from, to) : { ok: null, blanks: [] }
                 /* 이 나인이 카드와 안 맞는가 — 아홉 칸을 통째로 짚는다 */
                 const 나인어긋남 = nv.ok === false
                 const { strokes, filled } = grossOf(pars, overs[m], from, to)

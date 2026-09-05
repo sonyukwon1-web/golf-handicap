@@ -86,7 +86,8 @@ export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
     const 짚을것 = []
     for (const m of MEMBERS) {
       const row = overs[m]
-      if (!row) continue
+      /* 카드에 없던 사람은 짚을 것이 없다 — 빈 줄은 잘못이 아니다 */
+      if (!row || !nines?.[m]) continue
       for (const [label, from, to] of [['전반', 0, FRONT], ['후반', FRONT, HOLES]]) {
         const claimedNine = (from === 0 ? nines?.[m]?.front : nines?.[m]?.back) ?? null
         const v = verifyNine(pars, row, claimedNine, from, to)
