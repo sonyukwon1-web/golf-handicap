@@ -7,7 +7,6 @@ import RoundForm from './components/RoundForm.jsx'
 import DeviceSync from './components/DeviceSync.jsx'
 import AverageBoard from './components/AverageBoard.jsx'
 import Podium from './components/Podium.jsx'
-import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
@@ -346,8 +345,8 @@ export default function App() {
               <h2>전체 라운드</h2>
               <span className="hint">{roundCount}개</span>
             </div>
-            {/* 순위를 보는 자리에 켜고 끄는 자리를 함께 둔다 */}
-            <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
+            {/* 핸디 상한은 홈 한 곳에서만 정한다 — 같은 상자가 세 화면에 있으면
+                어디서 고쳐야 하는지 헷갈리고, 정작 볼 것을 아래로 밀어낸다 */}
             <RoundList rounds={rounds} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
@@ -360,8 +359,6 @@ export default function App() {
               {/* 늘 '5라운드 누적' 이라 적혀 있었다 — 무엇을 골랐든 같은 말이었다 */}
               <span className="hint">{기간이름}</span>
             </div>
-            <RankOptions ranking={ranking} onRanking={setRanking} stats={stats} members={MEMBERS} />
-
             {/* 무엇을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
             <label className="period-pick">
               {/*

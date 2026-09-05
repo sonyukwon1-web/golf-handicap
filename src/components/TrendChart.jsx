@@ -2,7 +2,21 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { MEMBER_COLORS, fmtAvg, fmtDateShort, sortRounds, trendSeries } from '../lib/handicap.js'
 
 /* 아래 여백은 세 줄(날짜 + 골프장 두 줄)을 받는다 */
-const PAD = { top: 14, right: 56, bottom: 50, left: 34 }
+/*
+  ══════════════════════════════════════════════════════════════════
+  **왼쪽 눈금은 굴러가지 않는다.**
+
+  라운드가 늘면 그래프가 가로로 길어져 밀어서 본다. 그런데 타수 눈금까지
+  함께 밀려 나가 버리니, 오른쪽 라운드를 볼 때는 그 점이 몇 타쯤인지 잴
+  자가 화면에 없었다. 눈금만 굴림 상자 **밖**에 따로 세워 붙박아 둔다.
+
+  그래서 왼쪽 여백이 둘로 나뉜다 —
+    AXIS      굴리지 않는 눈금 칸 (굴림 상자 밖)
+    PAD.left  굴림 상자 안, 가로줄이 시작하기 전의 숨 돌릴 자리
+  ══════════════════════════════════════════════════════════════════
+*/
+const AXIS = 32
+const PAD = { top: 14, right: 56, bottom: 50, left: 4 }
 const HEIGHT = 244
 
 /**
@@ -217,6 +231,18 @@ export default function TrendChart({ rounds }) {
         ))}
       </div>
 
+      <div className="chart-row">
+      {/* 붙박이 눈금 — 굴림 상자 밖이라 밀려 나가지 않는다 */}
+      <svg className="chart-yaxis" width={AXIS} height={HEIGHT} viewBox={`0 0 ${AXIS} ${HEIGHT}`}
+           aria-hidden="true" focusable="false">
+        {ticks.map((t) => (
+          <text key={t} x={AXIS - 6} y={yOf(t) + 4} textAnchor="end"
+                fontSize="10.5" fill="var(--ink-3)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {Math.round(t)}
+          </text>
+        ))}
+      </svg>
+
       <div
         className="chart-wrap"
         ref={wrapRef}
@@ -228,15 +254,10 @@ export default function TrendChart({ rounds }) {
       >
         <svg viewBox={`0 0 ${w} ${HEIGHT}`} width={w} height={HEIGHT} role="img"
              aria-label="멤버별 최근 5경기 평균 타수 추이">
+          {/* 숫자는 옆 붙박이 칸이 그린다 — 여기는 선만 */}
           {ticks.map((t) => (
-            <g key={t}>
-              <line x1={PAD.left} x2={w - PAD.right} y1={yOf(t)} y2={yOf(t)}
-                    stroke="var(--line)" strokeWidth="1" />
-              <text x={PAD.left - 7} y={yOf(t) + 4} textAnchor="end"
-                    fontSize="10.5" fill="var(--ink-3)" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {Math.round(t)}
-              </text>
-            </g>
+            <line key={t} x1={PAD.left} x2={w - PAD.right} y1={yOf(t)} y2={yOf(t)}
+                  stroke="var(--line)" strokeWidth="1" />
           ))}
 
           {/* 날짜 밑에 골프장 — 어느 날 어디서 친 라운드인지 그래프에서 바로 읽힌다 */}
@@ -303,6 +324,7 @@ export default function TrendChart({ rounds }) {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       <button className="link-btn" onClick={() => setShowTable((v) => !v)}>

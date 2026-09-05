@@ -599,7 +599,13 @@ main.shell { padding-top: 20px; }
   라운드가 늘면 그래프가 가로로 자란다 — 좁혀 넣는 대신 굴려 본다.
   세로로 굴리는 것은 그대로 두고(pan-y) 가로만 이 상자가 받는다.
 */
+/* 붙박이 눈금 + 굴림 상자 */
+.chart-row { display: flex; align-items: flex-start; }
+.chart-yaxis { flex: 0 0 auto; display: block; }
 .chart-wrap {
+  /* 굴림 상자가 남은 자리를 차지하되, 안의 그림이 넓다고 밀고 나가지 않게 */
+  flex: 1;
+  min-width: 0;
   position: relative;
   overflow-x: auto;
   overscroll-behavior-x: contain;
