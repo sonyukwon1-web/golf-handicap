@@ -109,15 +109,33 @@ export function computeRoundDetails(rounds, opts = DEFAULT_RANKING) {
   const sorted = sortRounds(rounds)
 
   return sorted.map((round, i) => {
-    const { stats } = computeStats(sorted.slice(0, i + 1), opts)
+    /*
+      ══════════════════════════════════════════════════════════
+      **핸디는 오늘 치기 전에 정해져 있어야 한다.**
+
+      여태 그 라운드까지 포함해(slice(0, i+1)) 핸디를 냈다. 그러면 오늘 성적이
+      오늘 핸디를 바꾼다 — 잘 친 날은 평균이 내려가 핸디가 깎이고, 못 친 날은
+      핸디가 늘어난다. **잘 칠수록 손해, 못 칠수록 이득**이 되어 핸디가 하려는
+      일과 정반대로 눌렸다.
+
+      실제로 평균 117 인 사람이 111 을 쳤을 때 핸디가 27 이 아니라 25 로
+      나왔다. 오늘 성적이 제 핸디를 갉아먹은 것이다.
+
+      **직전까지의 기록으로만** 낸다. 골프에서 핸디를 다루는 방식이기도 하다.
+      ══════════════════════════════════════════════════════════
+    */
+    const { stats } = computeStats(sorted.slice(0, i), opts)
 
     const entries = MEMBERS.filter((m) => isScore(round.scores?.[m]))
       .map((m) => {
         const gross = round.scores[m]
         /*
          * 핸디를 끄면 **카드에 찍힌 타수 그대로** 겨룬다 (net === gross).
-         * 켜도 기록이 한 번뿐이면 안 준다 — '평균' 이 그 날 타수 그 자체라
-         * 핸디가 타수 차이를 그대로 상쇄해 전원 동타가 된다.
+         *
+         * 켜도 **앞선 기록이 두 번은 있어야** 준다. 한 번뿐이면 그 한 라운드가
+         * 곧 평균이라 핸디가 타수 차이를 그대로 상쇄해 전원 동타가 된다.
+         * 그래서 첫 두 라운드는 그로스 그대로 겨룬다 — 견줄 것이 없는 날에
+         * 지어낸 핸디를 얹는 것보다 낫다.
          */
         const handicap = opts?.useHandicap && stats[m].total >= 2 ? (stats[m].handicap ?? 0) : 0
         return { member: m, gross, handicap, net: gross - handicap }
