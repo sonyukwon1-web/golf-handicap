@@ -48,7 +48,15 @@ export default function MemberAvatar({ member, size = 40, rank, src, alt }) {
  * 기하와 색은 podium 레퍼런스 SVG 에서 그대로 가져왔다.
  */
 export function BunkerFace({ member, src, size = 96 }) {
-  const clip = Math.round(size * 0.6)
+  /*
+    **얼굴을 얼마나 남길 것인가.**
+
+    60% 는 사진이 없던 때(성 한 글자)의 값이다. 글자는 위쪽에 있어 잘려도
+    읽혔는데, 진짜 얼굴을 넣으니 코 아래가 통째로 잘려 누구인지 알 수 없었다.
+    턱 언저리까지 남긴다 — 모래에 잠긴 느낌은 그대로고 얼굴은 알아본다.
+    (수면선은 아래 `bottom: 78` 이 잡으므로 이 값을 키우면 위로만 자란다)
+  */
+  const clip = Math.round(size * 0.82)
 
   return (
     <div className="bunker" style={{ position: 'relative', height: size * 2.4 }}>
