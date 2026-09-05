@@ -97,6 +97,12 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
       {NINES.map(({ key, label, from, to }) => (
         <div className="table-scroll" key={key}>
           <table className="score-grid">
+            <colgroup>
+              <col className="name" />
+              {Array.from({ length: to - from }, (_, k) => <col className="hole" key={k} />)}
+              <col className="over" />
+              <col className="total" />
+            </colgroup>
             <caption>{label} 9홀</caption>
             <thead>
               <tr>
@@ -104,8 +110,8 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                 {Array.from({ length: to - from }, (_, k) => (
                   <th scope="col" key={k}>{from + k + 1}</th>
                 ))}
-                <th scope="col" className="tcol">T</th>
                 <th scope="col" className="ocol" title="파 대비 오버 합계">±</th>
+                <th scope="col" className="tcol">T</th>
               </tr>
             </thead>
             <tbody>
@@ -124,8 +130,8 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                     </td>
                   )
                 })}
-                <td className="tcol">{parTotal(pars, from, to) || ''}</td>
                 <td className="ocol" />
+                <td className="tcol">{parTotal(pars, from, to) || ''}</td>
               </tr>
 
               {members.map((m) => {
@@ -149,8 +155,8 @@ export default function HoleGrid({ value, onChange, claimedTotals, playerOrder }
                         </td>
                       )
                     })}
-                    <td className="tcol">{filled > 0 ? strokes : ''}</td>
                     <td className="ocol">{filled > 0 ? fmtOver(overTotal(overs[m], from, to)) : ''}</td>
+                    <td className="tcol">{filled > 0 ? strokes : ''}</td>
                   </tr>
                 )
               })}

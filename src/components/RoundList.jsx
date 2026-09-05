@@ -24,6 +24,12 @@ function HoleTable({ round }) {
       {NINES.map(({ key, label, from, to }) => (
         <div className="table-scroll" key={key}>
           <table className="score-grid readonly">
+            <colgroup>
+              <col className="name" />
+              {Array.from({ length: to - from }, (_, k) => <col className="hole" key={k} />)}
+              <col className="over" />
+              <col className="total" />
+            </colgroup>
             <caption>
               {label} 9홀
               {key === 'front' && round.courseFront ? ` · ${round.courseFront}` : ''}
@@ -33,16 +39,16 @@ function HoleTable({ round }) {
               <tr>
                 <th scope="col" className="rowhead">HOLE</th>
                 {Array.from({ length: to - from }, (_, k) => <th scope="col" key={k}>{from + k + 1}</th>)}
-                <th scope="col" className="tcol">T</th>
                 <th scope="col" className="ocol" title="파 대비 오버 합계">±</th>
+                <th scope="col" className="tcol">T</th>
               </tr>
             </thead>
             <tbody>
               <tr className="par-row">
                 <th scope="row" className="rowhead">PAR</th>
                 {Array.from({ length: to - from }, (_, k) => <td key={k}>{round.pars[from + k]}</td>)}
-                <td className="tcol">{parTotal(round.pars, from, to)}</td>
                 <td className="ocol" />
+                <td className="tcol">{parTotal(round.pars, from, to)}</td>
               </tr>
               {players.map((m) => (
                 <tr key={m}>
@@ -55,8 +61,8 @@ function HoleTable({ round }) {
                       </td>
                     )
                   })}
-                  <td className="tcol">{grossOf(round.pars, round.holes[m], from, to).strokes}</td>
                   <td className="ocol">{fmtOver(overTotal(round.holes[m], from, to))}</td>
+                  <td className="tcol">{grossOf(round.pars, round.holes[m], from, to).strokes}</td>
                 </tr>
               ))}
             </tbody>

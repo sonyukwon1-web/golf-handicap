@@ -1053,10 +1053,15 @@ table.data td small { color: var(--ink-3); font-size: 11px; }
 /* ── 라운드 메타 입력 ─────────────────────────────────── */
 .meta-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* 날짜·시각 입력칸은 저마다 최소 폭이 있어, 좁은 화면에서 두 칸으로 두면 서로 겹친다 */
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-bottom: 14px;
 }
+@media (min-width: 420px) {
+  .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.meta-grid .field input { min-width: 0; max-width: 100%; }
 .meta-grid .wide { grid-column: 1 / -1; }
 .field .opt { font-weight: 500; color: var(--ink-3); }
 
@@ -1076,8 +1081,14 @@ table.score-grid {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
+  /* 칸 너비를 비율로 못박아, 좁은 화면에서도 9홀 + ± + T 가 한 번에 보이게 한다 */
+  table-layout: fixed;
   font-variant-numeric: tabular-nums;
 }
+table.score-grid col.name { width: 13.5%; }
+table.score-grid col.hole { width: 7.6%; }
+table.score-grid col.over { width: 8.5%; }
+table.score-grid col.total { width: 10%; }
 table.score-grid caption {
   text-align: left;
   font-size: 12px;
@@ -1094,29 +1105,26 @@ table.score-grid td {
 }
 table.score-grid thead th {
   background: var(--surface-2);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--ink-3);
   padding: 5px 0;
 }
 table.score-grid .rowhead {
-  position: sticky;
-  left: 0;
-  z-index: 1;
   background: var(--surface-2);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   text-align: left;
-  padding: 0 7px;
-  min-width: 54px;
+  padding: 0 4px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 table.score-grid tbody .rowhead { color: var(--ink); }
 table.score-grid .tcol {
   background: var(--surface-2);
   font-weight: 750;
-  font-size: 13px;
-  min-width: 36px;
+  font-size: 12.5px;
   border-right: 0;
 }
 table.score-grid .par-row td { background: var(--green-soft); }
@@ -1124,14 +1132,14 @@ table.score-grid .par-row .tcol { background: var(--green-soft); }
 
 table.score-grid input {
   width: 100%;
-  min-width: 30px;
+  min-width: 0;
   border: 0;
   background: transparent;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  padding: 8px 0;
+  padding: 8px 1px;
   border-radius: 0;
   color: var(--ink);
 }
@@ -1341,11 +1349,9 @@ input#scorecard-file:focus-visible + .dropzone {
 /* 파 대비 오버 합계 열 */
 table.score-grid .ocol {
   background: var(--surface-2);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  min-width: 34px;
   color: var(--ink-2);
-  border-right: 0;
 }
 table.score-grid .par-row .ocol { background: var(--green-soft); }
 table.score-grid .tcol { border-right: 1px solid var(--line); }

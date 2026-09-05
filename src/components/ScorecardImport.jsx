@@ -155,11 +155,6 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
 
   return (
     <div className="card ocr-card">
-      <div className="ocr-head">
-        <h3>스코어카드 사진으로 채우기</h3>
-        <span className="hint">읽은 값은 아래 표에서 고칠 수 있어요</span>
-      </div>
-
       {/* 아이폰 사파리는 숨은 file input 을 코드로 누르는 것을 막을 때가 있다.
           <label> 로 묶으면 브라우저가 스스로 사진첩을 연다. */}
       <input
@@ -185,7 +180,7 @@ export default function ScorecardImport({ onDraft, savedTick = 0 }) {
         onDrop={(e) => { e.preventDefault(); setDragging(false); if (!busy) accept(e.dataTransfer.files) }}
       >
         <span className="dz-icon" aria-hidden="true">📷</span>
-        <b>{busy ? '읽는 중…' : '사진을 끌어다 놓거나 눌러서 선택'}</b>
+        <b>{busy ? '읽는 중…' : '스코어카드를 올려주세요'}</b>
         <span className="dz-hint">여러 장을 한 번에 올리면 한 장씩 차례로 읽습니다</span>
       </label>
 
