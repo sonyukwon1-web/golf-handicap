@@ -468,8 +468,14 @@ main.shell { padding-top: 20px; }
 }
 .hd-row + .hd-row { border-top: 1px solid var(--line); }
 
-.hd-who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-/* 뱃지 줄은 카드 안에서 쓰던 위 여백(10px)을 여기서는 걷어낸다 */
+/*
+  **딱지는 이름 옆에.**
+
+  이름 아래에 두었더니 딱지가 붙은 줄만 두 줄이 되어, 이름이 위로 올라갔다
+  내려갔다 했다. 네 줄을 위아래로 훑는 목록에서 이름의 높이가 줄마다 다르면
+  눈이 그때마다 자리를 다시 찾는다. 한 줄에 세우고, 좁으면 접는다.
+*/
+.hd-who { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .hd-who .badge-row { margin: 0; }
 .hd-name { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700; }
 

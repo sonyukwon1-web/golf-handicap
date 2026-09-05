@@ -140,10 +140,16 @@ export function trendSeries(rounds) {
   }).filter((s) => s.points.length > 0)
 }
 
-/** 8.5 -> "8.5", 8.0 -> "8" */
+/**
+ * 평균 타수 — **정수로 반올림한다.**
+ *
+ * 96.8 · 113.3 처럼 소수 한 자리를 적어 두었더니, 옆에 선 핸디(−6, −22)와
+ * 자릿수가 어긋나 줄이 들쭉날쭉해 보였다. 0.1타는 이 앱에서 아무것도 가르지
+ * 않는다 — 핸디는 어차피 정수로 반올림해서 쓴다.
+ */
 export function fmtAvg(v) {
   if (v === null || v === undefined) return '–'
-  return (Math.round(v * 10) / 10).toFixed(1)
+  return String(Math.round(v))
 }
 
 export function fmtDate(iso) {
