@@ -329,7 +329,15 @@ export default function App() {
             {/* 무엇을 볼 것인가 — 아래 기록 전부가 이 값을 따른다 */}
             <label className="period-pick">
               <span>보기</span>
+              {/*
+                평균이 위, 라운드 하나하나가 아래. 여럿을 묶어 보는 것이 먼저
+                눈에 들어와야 한다 — 날짜 목록은 길어서 아래에 두어도 찾기 쉽다.
+              */}
               <select value={기간} onChange={(e) => set기간(e.target.value)}>
+                <optgroup label="평균">
+                  <option value="last5">최근 5개 라운드 평균</option>
+                  {해목록.map((y) => <option key={y} value={y}>{y}년 평균</option>)}
+                </optgroup>
                 <optgroup label="라운드 (날짜순)">
                   <option value="recent">최근 라운드</option>
                   {최신순.map((r) => (
@@ -337,10 +345,6 @@ export default function App() {
                       {fmtDate(r.date)} · {r.course || '골프장 미입력'}
                     </option>
                   ))}
-                </optgroup>
-                <optgroup label="평균">
-                  <option value="last5">최근 5개 라운드</option>
-                  {해목록.map((y) => <option key={y} value={y}>{y}년</option>)}
                 </optgroup>
               </select>
             </label>
