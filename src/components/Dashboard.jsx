@@ -124,8 +124,7 @@ export default function Dashboard({ rounds, ranking, onRanking, onGoInput, sync 
           어느 쪽을 보는 상자인지 헷갈렸다. 재료가 무엇인지 맨 위에 적어 둔다.
         */}
         <div className="card hdcp-card">
-          {/* '최근' 은 오늘 친 것도 든 것처럼 읽힌다 — 핸디는 오늘 치기 전에 정해진다 */}
-          <strong className="hdcp-cap">직전 5개 라운드 평균점수로 계산한 핸디</strong>
+          <strong className="hdcp-cap">최근 5라운드 평균점수</strong>
           <ul className="hdcp-list">
           {MEMBERS
             .map((m, i) => ({ m, slot: i + 1 }))
