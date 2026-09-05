@@ -17,10 +17,29 @@
 const ROOM = /^[a-z0-9]{4,32}$/i
 const MAX_BYTES = 900 * 1024   // Upstash 무료 한도(1MB)에 여유를 둔다
 
-const store = () => ({
-  url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
-})
+/**
+ * 저장소 주소와 열쇠를 찾는다.
+ *
+ * **이름을 못 박지 않는다.** Vercel 에서 저장소를 붙일 때 접두어를 붙일 수
+ * 있어(`kv_KV_REST_API_URL` 꼴), 이름을 하나로 정해 두면 대시보드에서 뭘
+ * 골랐느냐에 따라 조용히 못 찾는다. 끝이 맞는 것을 찾아 쓴다.
+ *
+ * READ_ONLY 토큰은 거른다 — 그것으로는 쓸 수가 없다.
+ */
+const store = () => {
+  const find = (suffix, deny) =>
+    Object.entries(process.env).find(
+      ([k, v]) => v && k.toUpperCase().endsWith(suffix) && !(deny && k.toUpperCase().includes(deny)),
+    )?.[1]
+
+  return {
+    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || find('REST_API_URL'),
+    token:
+      process.env.KV_REST_API_TOKEN ||
+      process.env.UPSTASH_REDIS_REST_TOKEN ||
+      find('REST_API_TOKEN', 'READ_ONLY'),
+  }
+}
 
 export default async function handler(req, res) {
   const { url, token } = store()
