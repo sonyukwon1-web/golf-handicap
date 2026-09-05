@@ -9,6 +9,7 @@ export const emptyData = () => ({
   members: MEMBERS,
   rounds: [],
   ranking: { ...DEFAULT_RANKING },
+  updatedAt: 0,
 })
 
 /** 길이 18의 숫자 배열로 맞춘다. 값이 없거나 범위를 벗어나면 null. */
@@ -101,7 +102,16 @@ export function normalize(raw) {
   }
 
   /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
-  return { version: 3, members: MEMBERS, rounds: clean, ranking }
+  /* 언제 고친 것인가 — 기기끼리 맞출 때 늦은 쪽이 이긴다 (lib/sync.js) */
+  const updatedAt = Number(raw.updatedAt)
+
+  return {
+    version: 3,
+    members: MEMBERS,
+    rounds: clean,
+    ranking,
+    updatedAt: Number.isFinite(updatedAt) ? updatedAt : 0,
+  }
 }
 
 export function load() {

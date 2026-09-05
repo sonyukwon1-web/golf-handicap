@@ -55,7 +55,7 @@ function HandicapRow({ s, slot, badges, photos }) {
   )
 }
 
-export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDelete, onGoInput }) {
+export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDelete, onGoInput, sync }) {
   const photos = loadPhotos()
   const { stats } = computeStats(rounds, ranking)
   const badges = computeBadges(rounds, ranking)
@@ -138,6 +138,9 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
 
       {/* 사진은 이 자리에서 등록한다 — 등록하면 이름 나오는 모든 자리가 얼굴로 바뀐다 */}
       <PhotoPicker />
+
+      {/* 기기 연결은 사진 바로 아래 — 둘 다 '이 기기에 담기는 것' 이야기다 */}
+      {sync}
     </>
   )
 }
