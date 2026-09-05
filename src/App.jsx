@@ -9,7 +9,6 @@ import AverageBoard from './components/AverageBoard.jsx'
 import Podium from './components/Podium.jsx'
 import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
-import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
 import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, sortRounds } from './lib/handicap.js'
@@ -205,11 +204,38 @@ export default function App() {
   const 해목록 = [...new Set(rounds.map((r) => String(r.date).slice(0, 4)).filter(Boolean))]
     .sort((a, b) => (a < b ? 1 : -1))
 
+  /**
+   * 평균으로 매긴 순위를 **시상대가 읽을 수 있는 모양**으로 바꾼다.
+   *
+   * 시상대는 라운드 하나(entries: member·gross·rank)를 받게 되어 있다. 평균도
+   * 결국 '누가 몇 타로 몇 등' 이라 같은 모양에 담긴다 — 부품을 새로 만들지 않고
+   * 재료만 맞춰 준다.
+   */
+  const 평균시상대 = (list) => {
+    const 줄 = MEMBERS
+      .map((m) => {
+        const 친것 = list.map((r) => r.scores?.[m]).filter((v) => typeof v === 'number' && Number.isFinite(v))
+        return 친것.length ? { member: m, avg: 친것.reduce((a, b) => a + b, 0) / 친것.length } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.avg - b.avg)
+    if (!줄.length) return null
+    return {
+      date: '',
+      course: '',
+      entries: 줄.map((r, i) => {
+        const 타 = Math.round(r.avg)
+        return { member: r.member, gross: 타, net: 타, rank: i + 1 }
+      }),
+    }
+  }
+
   const 기간라운드 = (() => {
     if (기간 === 'last5') return sortRounds(rounds).slice(-5)
     if (/^\d{4}$/.test(기간)) return rounds.filter((r) => String(r.date).startsWith(기간))
     return rounds
   })()
+  const 평균순위 = 기간 === 'recent' ? null : 평균시상대(기간라운드)
 
   const onExport = () => {
     if (roundCount === 0) {
@@ -338,18 +364,26 @@ export default function App() {
               </div>
             )}
 
-            {기간 !== 'recent' && (
-              <>
-                <div className="fame-head" style={{ marginTop: 2 }}>
-                  <h3>📊 {기간 === 'last5' ? '최근 5개 라운드 평균' : `${기간}년 평균`}</h3>
+            {/*
+              **평균도 시상대로 세운다.**
+
+              최근 라운드는 트로피 시상대인데 평균은 목록이라, 고를 때마다 화면이
+              통째로 다른 앱처럼 보였다. 같은 것을 재는 자리는 같은 모양이어야
+              한다 — 평균으로 매긴 1·2·3위도 시상대에 올린다.
+            */}
+            {기간 !== 'recent' && 평균순위 && (
+              <div className="card podium-card">
+                <div className="fame-head">
+                  <h3>🏆 {기간 === 'last5' ? '최근 5개 라운드' : `${기간}년`} 평균</h3>
                   <span className="hint">{기간라운드.length}라운드 · 친 타수 그대로</span>
                 </div>
-                <AverageBoard rounds={기간라운드} />
-              </>
+                <Podium round={평균순위} ranking={{ useHandicap: false }} compact />
+              </div>
             )}
 
+            {기간 !== 'recent' && <AverageBoard rounds={기간라운드} />}
+
             <HallOfFame rounds={기간라운드} ranking={ranking} />
-            <SeasonRanking rounds={기간라운드} ranking={ranking} />
             <RivalMatch rounds={기간라운드} ranking={ranking} />
           </section>
         )}

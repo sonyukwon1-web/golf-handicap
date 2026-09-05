@@ -78,8 +78,14 @@ export function trashTalk(rounds, opts) {
 
     if (r.lastStreak >= 2) {
       out.push(...LINES.doom.map((l) => ({ text: fill(l, m, r.lastStreak) })))
+      /*
+        **핸디를 안 걸고 있으면 핸디 이야기를 안 한다.**
+
+        '26타나 받고도 꼴찌' 는 그 26타를 실제로 받았을 때만 성립한다. 스위치를
+        꺼 둔 상태에서는 아무도 한 타도 안 받았으니, 그 말이 앞뒤가 안 맞는다.
+      */
       const h = stats[m].handicap
-      if (h > 0) out.push(...LINES.handicapDoom.map((l) => ({ text: fill(l, m, h) })))
+      if (opts?.useHandicap && h > 0) out.push(...LINES.handicapDoom.map((l) => ({ text: fill(l, m, h) })))
     }
 
     if (imp[m] != null && imp[m] >= 2) {

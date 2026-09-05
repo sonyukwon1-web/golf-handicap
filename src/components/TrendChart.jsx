@@ -156,13 +156,33 @@ export default function TrendChart({ rounds }) {
     보여 줄 수가 없었다. 휴대폰에는 '갖다 대기' 자체가 없어 한 번 누르고
     떼면 그대로 사라졌다. 누른 자리는 다시 누르거나 빈 곳을 누를 때까지 남는다.
   */
+  /*
+    **끌 때는 안 띄운다.**
+
+    그래프가 가로로 길어지면서 손가락으로 밀어 굴리게 됐는데, 누르는 순간
+    값이 붙잡혀 굴리는 내내 말풍선이 따라다녔다. 누른 자리에서 얼마나
+    움직였는지 재서, 거의 안 움직였을 때(6px 안쪽)만 '누른 것' 으로 본다.
+  */
+  const down = useRef(null)
+
   const onMove = (e) => {
+    if (down.current) {
+      down.current.moved = Math.max(down.current.moved, Math.abs(e.clientX - down.current.x))
+      return
+    }
     if (pinned) return
     const rect = e.currentTarget.getBoundingClientRect()
     setHover(pick(e.clientX, rect))
   }
 
-  const onTap = (e) => {
+  const onDown = (e) => {
+    down.current = { x: e.clientX, moved: 0 }
+  }
+
+  const onUp = (e) => {
+    const d = down.current
+    down.current = null
+    if (!d || d.moved > 6) return   // 굴린 것이다
     const rect = e.currentTarget.getBoundingClientRect()
     const at = pick(e.clientX, rect)
     if (pinned === at) { setPinned(null); setHover(null) }
@@ -194,8 +214,10 @@ export default function TrendChart({ rounds }) {
         className="chart-wrap"
         ref={wrapRef}
         onPointerMove={onMove}
-        onPointerDown={onTap}
-        onPointerLeave={() => { if (!pinned) setHover(null) }}
+        onPointerDown={onDown}
+        onPointerUp={onUp}
+        onPointerCancel={() => { down.current = null }}
+        onPointerLeave={() => { down.current = null; if (!pinned) setHover(null) }}
       >
         <svg viewBox={`0 0 ${w} ${HEIGHT}`} width={w} height={HEIGHT} role="img"
              aria-label="멤버별 최근 5경기 평균 타수 추이">

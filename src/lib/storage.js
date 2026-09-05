@@ -95,11 +95,15 @@ export function normalize(raw) {
     없으면(옛 자료) 기본값 — **핸디 끔**이다.
   */
   const r = raw.ranking || {}
-  const cap = Number(r.cap)
-  const ranking = {
-    useHandicap: r.useHandicap === true,
-    cap: Number.isFinite(cap) && cap >= 0 ? Math.round(cap) : null,
-  }
+  /*
+    **상한 없음(null)을 0 으로 읽지 않는다.**
+
+    `Number(null)` 은 0 이다. 그래서 '상한 없음' 으로 담아 둔 것을 다시 읽으면
+    상한 0 이 되어, 네 명 핸디가 전부 0 으로 잘렸다 — 앱을 새로 열 때마다
+    핸디가 사라지던 까닭이다. 숫자로 담긴 것만 숫자로 읽는다.
+  */
+  const cap = typeof r.cap === 'number' && Number.isFinite(r.cap) && r.cap > 0 ? Math.round(r.cap) : null
+  const ranking = { useHandicap: r.useHandicap === true, cap }
 
   /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
   /* 언제 고친 것인가 — 기기끼리 맞출 때 늦은 쪽이 이긴다 (lib/sync.js) */

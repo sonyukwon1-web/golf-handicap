@@ -528,6 +528,20 @@ main.shell { padding-top: 20px; }
 */
 .hd-who { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .hd-who .badge-row { margin: 0; }
+/* 딱지는 눌러서 뜻을 펴는 단추다 — 단추 기본 모양은 지운다 */
+.badge-row button.chip { border: 0; cursor: pointer; font: inherit; }
+/* 펴진 설명 — 줄 전체를 가로질러 한 줄로 */
+.badge-detail {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
 .hd-name { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700; }
 
 .hd-stat {

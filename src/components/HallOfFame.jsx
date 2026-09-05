@@ -4,7 +4,13 @@ import MemberAvatar from './MemberAvatar.jsx'
 import { loadPhotos } from '../lib/photos.js'
 import { holeStats } from '../lib/holes.js'
 
-const fmt1 = (v) => (v === null || v === undefined ? '–' : (v > 0 ? '+' : '') + v.toFixed(1))
+/*
+  **반올림해서 한 자리까지만.**
+
+  1.4444444444444444 같은 수가 그대로 찍혔다. 오버 타수를 소수점 열여섯 자리로
+  적어 봐야 알려 주는 것이 없고, 표만 옆으로 늘어난다.
+*/
+const fmt1 = (v) => (v === null || v === undefined ? '–' : (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1))
 
 /** 홀별 기록이 쌓여야 나오는 통계 */
 function HoleAwards({ rounds }) {
