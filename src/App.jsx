@@ -248,6 +248,8 @@ export default function App() {
     아래 홀별 기록·라이벌은 라운드 묶음이 있어야 하므로 최근 다섯 라운드를 쓴다.
   */
   const 사람별5 = 기간 === 'last5' ? 5 : null
+  /** 평균을 보고 있는가 — 최근 5개이거나 어느 해이거나 */
+  const 평균보기 = 기간 === 'last5' || /^\d{4}$/.test(기간)
 
   const 기간라운드 = (() => {
     if (기간 === 'last5') return sortRounds(rounds).slice(-5)
@@ -255,13 +257,19 @@ export default function App() {
     if (고른라운드) return [고른라운드]
     return rounds
   })()
-  const 평균순위 = 기간 === 'last5' || /^\d{4}$/.test(기간)
-    ? 평균시상대(사람별5 ? rounds : 기간라운드, 사람별5)
-    : null
-  /** 고른 그 라운드의 순위 (없으면 가장 최근) */
-  const 볼라운드 = 고른라운드
-    ? outcomes.find((o) => o.id === 고른라운드.id) || null
-    : latest
+  const 평균순위 = 평균보기 ? 평균시상대(사람별5 ? rounds : 기간라운드, 사람별5) : null
+  /**
+   * 시상대에 세울 라운드 — **라운드를 고른 때만.**
+   *
+   * 평균을 골라도 맨 위에 '최근 라운드' 시상대가 그대로 남아 있었다. 아래에
+   * 평균 시상대가 하나 더 서서 두 개가 겹쳐 뜨고, 맨 위 카드는 그대로라
+   * **고른 것이 반영이 안 된 것처럼 보였다.**
+   */
+  const 볼라운드 = 평균보기
+    ? null
+    : 고른라운드
+      ? outcomes.find((o) => o.id === 고른라운드.id) || null
+      : latest
 
   return (
     <div className="app">
