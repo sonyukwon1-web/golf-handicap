@@ -32,7 +32,7 @@ export default function RankOptions({ ranking, onRanking, stats, members = [] })
         54 같은 뜻 없는 값도 들어갔다. 쓸 만한 범위(1~15타)만 목록으로 세운다.
       */}
       <label className="cap">
-        <span>상한</span>
+        <span>핸디 상한</span>
         <select
           className="compact"
           value={ranking.cap ?? ''}
