@@ -51,7 +51,7 @@ export default function PersonalBest({ rounds, 번호 }) {
               <b>{r.member}</b>
               {/* 언제 어디서 친 것인지 — 숫자만 있으면 자랑이 안 된다 */}
               <em>
-                {번호?.get(r.round.id) ? `${번호.get(r.round.id)}번째 · ` : ''}
+                {번호?.get(r.round.id) && <i className="round-no sm">{번호.get(r.round.id)}</i>}
                 {fmtDate(r.round.date)} · {r.round.course || '골프장 미입력'}
               </em>
             </span>

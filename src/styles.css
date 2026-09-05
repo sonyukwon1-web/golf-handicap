@@ -694,20 +694,37 @@ table.data tbody tr:last-child th { border-bottom: 0; }
 .round-head:hover { background: var(--surface-2); }
 
 .round-date { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
-/* 몇 번째 필드인지 — 날짜 앞의 작은 번호표 */
+/*
+  몇 번째 필드인지 — 날짜 앞의 **동그라미** 번호.
+
+  알약 모양이던 때는 자릿수에 따라 가로로 늘어나 두 자리부터 타원이 됐다.
+  너비와 높이를 같은 값으로 못 박고 반지름을 절반으로 준다 — 1번이든 12번이든
+  같은 동그라미다. 세 자리(100번)까지 가면 글자를 줄여 담는다.
+*/
 .round-no {
-  display: inline-block;
-  min-width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
   margin-right: 7px;
-  padding: 1px 5px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--surface-2);
   border: 1px solid var(--line-strong);
   color: var(--ink-3);
   font: 700 11px Oswald, sans-serif;
   font-style: normal;
-  text-align: center;
-  vertical-align: 2px;
+  line-height: 1;
+  vertical-align: -5px;
+}
+/* 설명 줄에 얹는 작은 동그라미 */
+.round-no.sm {
+  width: 17px;
+  height: 17px;
+  margin-right: 5px;
+  font-size: 9.5px;
+  vertical-align: -4px;
 }
 .round-course { font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
 

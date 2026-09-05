@@ -11,7 +11,7 @@ import PersonalBest from './components/PersonalBest.jsx'
 import RoundList from './components/RoundList.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
 import { roundOutcomes } from './lib/awards.js'
-import { DEFAULT_RANKING, MEMBERS, computeStats, fmtDate, roundNumbers, scoresOf, sortRounds } from './lib/handicap.js'
+import { DEFAULT_RANKING, MEMBERS, circled, computeStats, fmtDate, roundNumbers, scoresOf, sortRounds } from './lib/handicap.js'
 import { findDuplicate } from './lib/duplicates.js'
 import { load, save, normalize } from './lib/storage.js'
 import { applyPhotos, decideSync, pull, push } from './lib/sync.js'
@@ -284,7 +284,7 @@ export default function App() {
   const 기간이름 = 평균보기
     ? (본기간 === 'last5' ? '최근 5개 라운드 평균' : `${본기간}년 평균`)
     : 고른라운드
-      ? `${번호.get(고른라운드.id)}번째 · ${fmtDate(고른라운드.date)} · ${고른라운드.course || '골프장 미입력'}`
+      ? `${circled(번호.get(고른라운드.id))} ${fmtDate(고른라운드.date)} · ${고른라운드.course || '골프장 미입력'}`
       : '전체'
 
   return (
@@ -378,7 +378,7 @@ export default function App() {
                 <optgroup label="라운드 (날짜순)">
                   {최신순.map((r) => (
                     <option key={r.id} value={String(r.id)}>
-                      {번호.get(r.id)}. {fmtDate(r.date)} · {r.course || '골프장 미입력'}
+                      {circled(번호.get(r.id))} {fmtDate(r.date)} · {r.course || '골프장 미입력'}
                     </option>
                   ))}
                 </optgroup>
@@ -395,7 +395,10 @@ export default function App() {
               <div className="card podium-card">
                 <div className="fame-head">
                   <h3>🏆 {볼라운드.course || '이 라운드'}</h3>
-                  <span className="hint">{번호.get(볼라운드.id)}번째 · {fmtDate(볼라운드.date)}</span>
+                  <span className="hint">
+                    <i className="round-no sm">{번호.get(볼라운드.id)}</i>
+                    {fmtDate(볼라운드.date)}
+                  </span>
                 </div>
                 <Podium round={볼라운드} compact />
               </div>

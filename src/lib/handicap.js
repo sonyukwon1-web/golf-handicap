@@ -37,6 +37,24 @@ export function roundNumbers(rounds) {
   return map
 }
 
+/**
+ * 번호를 **동그라미 안 숫자**로 — ①②③…
+ *
+ * 드롭다운 항목처럼 글자만 넣을 수 있는 자리에서 쓴다. 그림을 그릴 수 있는
+ * 자리(카드·그래프)는 진짜 동그라미를 그리므로 이 함수를 안 쓴다.
+ *
+ * 유니코드에 있는 것은 ①–⑳(1–20) · ㉑–㉟(21–35) · ㊱–㊿(36–50) 까지다.
+ * 그 너머는 동그라미가 아예 없으므로 `51.` 로 물러선다 — 없는 글자를 억지로
+ * 넣으면 네모(두부)가 뜬다.
+ */
+export function circled(n) {
+  if (!Number.isInteger(n) || n < 1) return ''
+  if (n <= 20) return String.fromCodePoint(0x2460 + n - 1)
+  if (n <= 35) return String.fromCodePoint(0x3251 + n - 21)
+  if (n <= 50) return String.fromCodePoint(0x32b1 + n - 36)
+  return `${n}.`
+}
+
 /** 해당 멤버가 실제로 친 스코어만 시간순으로 */
 export function scoresOf(sortedRounds, member) {
   return sortedRounds.map((r) => r.scores?.[member]).filter(isScore)

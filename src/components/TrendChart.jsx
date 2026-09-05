@@ -22,8 +22,8 @@ import { MEMBER_COLORS, fmtAvg, fmtDateShort, sortRounds, trendSeries } from '..
   (courseLines) 그 절반이 들어갈 만큼 둔다.
 */
 const AXIS = 30
-const PAD = { top: 14, right: 56, bottom: 50, left: 34 }
-const HEIGHT = 244
+const PAD = { top: 14, right: 56, bottom: 62, left: 34 }
+const HEIGHT = 260
 
 /**
  * 골프장 이름을 x축 라벨로 — **자르지 않고 두 줄로 나눈다.**
@@ -266,19 +266,34 @@ export default function TrendChart({ rounds, 번호 }) {
                   stroke="var(--line)" strokeWidth="1" />
           ))}
 
-          {/* 날짜 밑에 골프장 — 어느 날 어디서 친 라운드인지 그래프에서 바로 읽힌다 */}
+          {/*
+            날짜 밑에 골프장 — 어느 날 어디서 친 라운드인지 그래프에서 바로 읽힌다.
+            몇 번째 필드인지는 **그 위에 동그라미로** 얹는다. 여기는 그림이라
+            글자 동그라미(①)를 빌려 오지 않고 진짜 원을 그린다.
+          */}
           {xLabels.map((i) => (
-            <text key={i} x={xOf(i + 1)} textAnchor="middle" fill="var(--ink-3)">
-              <tspan x={xOf(i + 1)} y={HEIGHT - 34} fontSize="10.5">
-                {/* 몇 번째로 친 필드인지 — 날짜 앞에 붙인다 */}
-                {번호?.get(sorted[i].id) ? `${번호.get(sorted[i].id)}. ` : ''}{fmtDateShort(sorted[i].date)}
-              </tspan>
-              {courseLines(sorted[i].course).map((line, k) => (
-                <tspan key={k} x={xOf(i + 1)} y={HEIGHT - 21 + k * 11} fontSize="9.5">
-                  {line}
+            <g key={i}>
+              {번호?.get(sorted[i].id) && (
+                <>
+                  <circle cx={xOf(i + 1)} cy={HEIGHT - 45} r="8"
+                          fill="var(--surface-2)" stroke="var(--line-strong)" strokeWidth="1" />
+                  <text x={xOf(i + 1)} y={HEIGHT - 41.5} textAnchor="middle"
+                        fontSize="9.5" fontWeight="700" fill="var(--ink-3)">
+                    {번호.get(sorted[i].id)}
+                  </text>
+                </>
+              )}
+              <text x={xOf(i + 1)} textAnchor="middle" fill="var(--ink-3)">
+                <tspan x={xOf(i + 1)} y={HEIGHT - 27} fontSize="10.5">
+                  {fmtDateShort(sorted[i].date)}
                 </tspan>
-              ))}
-            </text>
+                {courseLines(sorted[i].course).map((line, k) => (
+                  <tspan key={k} x={xOf(i + 1)} y={HEIGHT - 15 + k * 11} fontSize="9.5">
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </g>
           ))}
 
           {hover && (
