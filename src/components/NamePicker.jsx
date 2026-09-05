@@ -3,6 +3,11 @@ import { josaWith } from '../lib/josa.js'
 
 const NINE = 9
 
+/** 한 나인의 오버 합계 — 못 읽은 칸은 0으로 본다 */
+const overOf = (arr) => arr.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0)
+/** +3 · E · -1 꼴로 (파는 숫자 0 보다 E 가 골프장 표기다) */
+const fmtOver = (n) => (n === 0 ? 'E' : n > 0 ? `+${n}` : String(n))
+
 /**
  * 성이 겹쳐 카드로 구분할 수 없는 줄의 주인을 고르는 팝업.
  *
@@ -41,12 +46,32 @@ export default function NamePicker({ rows, card, onConfirm, onCancel }) {
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" tabIndex={-1} ref={dialogRef}>
         <h2 id="picker-title" className="modal-title">누구의 기록인지 골라 주세요</h2>
+        {/*
+          ══════════════════════════════════════════════════════════
+          **어느 카드를 보고 고르는 것인지 늘 적는다.**
+
+          여태 읽은 값만 이어 붙여 적었더니, 넷 다 못 읽으면 줄 자체가 사라져
+          **아무 표시 없이** 이름만 고르게 됐다. 여러 장을 이어 올릴 때는 지금
+          몇 번째 카드인지조차 알 수 없다.
+
+          못 읽은 것은 지우지 않고 **'모름' 이라고 적는다** — 비어 있다는 사실이
+          그 자리에서 보여야 저장 전에 채울 수 있다.
+          ══════════════════════════════════════════════════════════
+        */}
         {card && (
-          <p className="picker-card">
-            {[card.date, card.course, [card.courseFront, card.courseBack].filter(Boolean).join('-'), card.teeTime]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
+          <dl className="picker-card">
+            {[
+              ['날짜', card.date],
+              ['골프장', card.course],
+              ['코스', [card.courseFront, card.courseBack].filter(Boolean).join(' - ')],
+              ['티오프', card.teeTime],
+            ].map(([label, v]) => (
+              <div key={label} className="pc-item">
+                <dt>{label}</dt>
+                <dd data-unread={!v || undefined}>{v || '모름'}</dd>
+              </div>
+            ))}
+          </dl>
         )}
         <p className="modal-desc">
           카드에 <b>{josaWith(rows[0].label, '이/가')}</b> 두 줄이라 앱이 구분할 수 없습니다.{' '}
@@ -77,12 +102,15 @@ export default function NamePicker({ rows, card, onConfirm, onCancel }) {
               <colgroup>
                 <col className="name" />
                 {Array.from({ length: NINE }, (_, k) => <col className="hole" key={k} />)}
+                <col className="over" />
                 <col className="total" />
               </colgroup>
               <thead>
                 <tr>
                   <th />
                   {Array.from({ length: NINE }, (_, k) => <th key={k}>{k + 1}</th>)}
+                  {/* 오버 합계는 T 바로 앞에 — '몇 오버로 몇 타' 가 한 눈에 이어진다 */}
+                  <th className="ov">±</th>
                   <th className="t">T</th>
                 </tr>
               </thead>
@@ -98,9 +126,17 @@ export default function NamePicker({ rows, card, onConfirm, onCancel }) {
                         {v === null ? '·' : v}
                       </td>
                     ))}
+                    <td className="ov">{fmtOver(overOf(row.overs.slice(from, from + NINE)))}</td>
                     <td className="t">{Number.isFinite(total) ? total : '–'}</td>
                   </tr>
                 ))}
+                {/* 카드에 없는 줄이지만, 고를 때 보는 것은 결국 이 두 수다 */}
+                <tr className="sum">
+                  <th scope="row">합계</th>
+                  <td colSpan={NINE} />
+                  <td className="ov">{fmtOver(overOf(row.overs))}</td>
+                  <td className="t">{row.total ?? '–'}</td>
+                </tr>
               </tbody>
             </table>
           </div>

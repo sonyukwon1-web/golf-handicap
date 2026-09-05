@@ -3,13 +3,10 @@ import { HOLES, completeTotal } from './holes.js'
 
 const KEY = 'golf-handicap:v1'
 
-export const DEFAULT_PENALTIES = ['밥 사기', '커피 사기', '다음 라운드 캐디피 내기']
-
 export const emptyData = () => ({
   version: 3,
   members: MEMBERS,
   rounds: [],
-  penalties: [...DEFAULT_PENALTIES],
 })
 
 /** 길이 18의 숫자 배열로 맞춘다. 값이 없거나 범위를 벗어나면 null. */
@@ -45,12 +42,6 @@ export function normalize(raw) {
         const v = Number(r.scores?.[m])
         scores[m] = r.scores?.[m] === null || r.scores?.[m] === '' || !Number.isFinite(v) ? null : v
       }
-      // 벌칙은 나중에 붙은 항목이라 없을 수 있다
-      const penalty =
-        r.penalty && typeof r.penalty.text === 'string' && Array.isArray(r.penalty.members)
-          ? { text: r.penalty.text, members: r.penalty.members.filter((m) => MEMBERS.includes(m)) }
-          : null
-
       // 홀별 기록은 나중에 생긴 형식이라 없을 수 있다 (총 타수만 적은 옛 라운드).
       const pars = holeArray(r.pars, { min: 3, max: 6 })
       let holes = null
@@ -92,16 +83,12 @@ export function normalize(raw) {
         order: order && order.length ? order : null,
         scores,
         createdAt: Number.isFinite(Number(r.createdAt)) ? Number(r.createdAt) : i,
-        penalty,
       }
     })
     .filter((r) => MEMBERS.some((m) => isScore(r.scores[m])))
 
-  const penalties = Array.isArray(raw.penalties)
-    ? [...new Set(raw.penalties.filter((p) => typeof p === 'string' && p.trim()).map((p) => p.trim()))]
-    : [...DEFAULT_PENALTIES]
-
-  return { version: 3, members: MEMBERS, rounds: clean, penalties }
+  /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
+  return { version: 3, members: MEMBERS, rounds: clean }
 }
 
 export function load() {

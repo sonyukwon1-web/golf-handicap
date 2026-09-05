@@ -231,86 +231,59 @@ main.shell { padding-top: 20px; }
 }
 
 /* ── 멤버 카드 ────────────────────────────────────────── */
-.member-grid {
+/* ── 핸디 목록 ────────────────────────────────────────── */
+.hdcp-list { list-style: none; margin: 0; padding: 4px 0; }
+
+.hd-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-@media (min-width: 720px) {
-  .member-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-.member-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 14px 14px 12px;
-  position: relative;
-  overflow: hidden;
-}
-.member-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--dot, var(--green));
-}
-
-.member-name {
-  display: flex;
+  grid-template-columns: 4px 1fr auto auto;
   align-items: center;
-  gap: 7px;
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  gap: 10px;
+  padding: 10px 14px;
 }
-.swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
+.hd-row + .hd-row { border-top: 1px solid var(--line); }
+
+/* 이름 앞 색 막대 — 추이 그래프의 선 색과 같은 색이라 두 화면이 이어진다 */
+.hd-row .swatch {
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
   background: var(--dot);
-  flex-shrink: 0;
 }
 
-.badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: var(--green-soft);
-  color: var(--green-ink);
-  letter-spacing: 0.02em;
-}
+.hd-who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+/* 뱃지 줄은 카드 안에서 쓰던 위 여백(10px)을 여기서는 걷어낸다 */
+.hd-who .badge-row { margin: 0; }
+.hd-name { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 700; }
 
-.hdcp {
+.hd-stat {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  line-height: 1;
-}
-.hdcp b {
-  font-size: 44px;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  font-variant-numeric: proportional-nums;
-}
-.hdcp i { font-style: normal; font-size: 13px; color: var(--ink-3); font-weight: 600; }
-
-.member-sub {
-  display: flex;
-  gap: 14px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-.member-sub div { min-width: 0; }
-.member-sub dt { font-size: 11.5px; color: var(--ink-3); margin: 0 0 2px; }
-.member-sub dd {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.hd-stat b { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.hd-stat em { font-style: normal; }
+
+/* 빼주는 타수 — 이 줄에서 가장 큰 글자다. 기준자(0)는 물러선다 */
+.hd-num {
+  min-width: 46px;
+  text-align: right;
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--green-ink, var(--green));
+}
+.hd-num[data-base] { color: var(--ink-3); font-weight: 700; }
+
+/* 아주 좁은 화면에서는 평균·라운드를 이름 아래로 내린다 */
+@media (max-width: 360px) {
+  .hd-row { grid-template-columns: 4px 1fr auto; }
+  .hd-stat { grid-column: 2; grid-row: 2; }
 }
 
 /* ── 차트 ─────────────────────────────────────────────── */
@@ -865,6 +838,10 @@ table.data td.worst { color: var(--ink-3); }
 .champ-pts { margin-left: auto; font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 /* ── 라이벌 매치 ──────────────────────────────────────── */
+/* 못 채운 칸을 그 자리에서 짚는다 (OCR 이 날짜를 못 읽었을 때) */
+.field-warn { margin: 4px 0 0; font-size: 11.5px; color: var(--warn, #b26a00); }
+input[data-warn] { border-color: var(--warn, #b26a00); }
+
 .rival-card { padding: 14px; }
 
 /* 맞대결 표의 날짜 밑에 붙는 골프장 이름 — 날짜보다 한 단계 물러선다 */
@@ -981,63 +958,6 @@ table.data td small { color: var(--ink-3); font-size: 11px; }
 .wb-gross { margin-left: auto; color: var(--ink-3); }
 .wb-net { font-weight: 750; font-size: 16px; min-width: 34px; text-align: right; }
 
-/* ── 벌칙 룰렛 ────────────────────────────────────────── */
-.roulette { text-align: center; }
-.roulette .modal-desc { text-align: left; }
-
-.wheel-wrap { position: relative; width: min(240px, 68vw); margin: 4px auto 14px; }
-.wheel { display: block; width: 100%; height: auto; }
-.wheel-pin {
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 16px solid var(--ink);
-  z-index: 2;
-}
-
-.roulette-result { min-height: 52px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
-.roulette-result .r-label { font-size: 11.5px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.03em; }
-.roulette-result strong { font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: -0.01em; }
-.roulette-result .r-idle { font-size: 13px; color: var(--ink-3); }
-
-.penalty-edit { margin-top: 14px; text-align: left; border-top: 1px solid var(--line); padding-top: 12px; }
-.penalty-edit ul { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.penalty-edit li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-  padding: 7px 8px 7px 11px;
-}
-.penalty-edit li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.penalty-add { display: flex; gap: 8px; }
-.penalty-add input {
-  flex: 1;
-  min-width: 0;
-  background: var(--surface-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  padding: 9px 10px;
-}
-
-.penalty-tag {
-  margin: 10px 0 0;
-  padding: 9px 11px;
-  background: var(--surface-2);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius-sm);
-  font-size: 12.5px;
-  color: var(--ink-2);
-}
-.penalty-tag b { color: var(--ink); }
-
 /* ── 입력 방식 전환 ───────────────────────────────────── */
 .mode-switch {
   display: flex;
@@ -1074,7 +994,35 @@ table.data td small { color: var(--ink-3); font-size: 11px; }
 @media (min-width: 420px) {
   .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/*
+  ══════════════════════════════════════════════════════════
+  **날짜·시각 칸이 아이폰에서 카드 밖으로 튀어나오던 자리.**
+
+  격자 칸(.field)의 기본 min-width 는 auto 라, 안에 든 것의 최소 폭보다 작아질
+  수 없다. 사파리의 <input type="date"> 는 그 최소 폭이 꽤 넓어서, 칸이 통째로
+  부풀며 격자와 카드를 밀어냈다 — 다른 입력칸은 멀쩡한데 날짜와 티오프만
+  오른쪽으로 삐져나온 까닭이다. 칸에도 min-width: 0 을 준다.
+
+  더해서 사파리 기본 모양을 끈다(-webkit-appearance). 안 끄면 글자가 가운데로
+  몰려, 왼쪽에 붙는 다른 칸들과 줄이 안 맞는다.
+  ══════════════════════════════════════════════════════════
+*/
+.meta-grid .field { min-width: 0; }
 .meta-grid .field input { min-width: 0; max-width: 100%; }
+
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  text-align: left;
+  /* 사파리가 넣는 안쪽 여백을 지운다 — 안 지우면 글자가 한쪽으로 쏠린다 */
+  padding-inline: 11px;
+}
+/* 사파리는 값이 비어 있어도 자리를 잡아 둔다 — 그 자리를 우리 글자색으로 */
+input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .meta-grid .wide { grid-column: 1 / -1; }
 .field .opt { font-weight: 500; color: var(--ink-3); }
 
@@ -1330,16 +1278,35 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 /* ── 이름 고르기 팝업 ─────────────────────────────────── */
 .modal.picker { max-width: 460px; }
 
-/* 여러 장을 이어서 올릴 때 지금 어느 카드인지 */
+/* 여러 장을 이어서 올릴 때 지금 어느 카드인지 — 넷을 고르게 나눠 세운다 */
 .picker-card {
+  display: grid;
+  /* 좁은 화면에서는 두 줄로 — 넷을 한 줄에 세우면 골프장 이름이 두 글자만 남는다 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
   margin: -10px 0 14px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--surface-2);
+  background: var(--line);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  padding: 7px 10px;
+  overflow: hidden;
 }
+.picker-card .pc-item { background: var(--surface-2); padding: 6px 8px; min-width: 0; }
+@media (min-width: 420px) {
+  .picker-card { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.picker-card dt { font-size: 10px; font-weight: 600; color: var(--ink-3); }
+.picker-card dd {
+  margin: 1px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-1);
+  /* 길면 줄이 바뀌는 대신 잘린다 — 한 칸만 키가 커지면 줄이 들쭉날쭉해진다 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 못 읽은 칸은 값처럼 보이면 안 된다 */
+.picker-card dd[data-unread] { color: var(--ink-3); font-weight: 600; }
 
 .pick-row {
   border: 1px solid var(--line-strong);
@@ -1350,7 +1317,11 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
 .pick-row + .pick-row { margin-top: 10px; }
 .pick-row.done { border-color: var(--green); background: var(--green-soft); }
 
-.pick-head { display: flex; align-items: center; gap: 10px; }
+/*
+  총타수와 이름 단추를 **양 끝에** 세운다. 단추가 줄 전체로 늘어나면 세 글자
+  이름 하나가 200px 을 먹어, 왼쪽 큰 숫자와 사이가 휑하게 벌어진다.
+*/
+.pick-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .pick-total {
   font-size: 22px;
   font-weight: 750;
@@ -1358,7 +1329,8 @@ table.score-grid.readonly td.blowup { color: var(--danger); }
   min-width: 58px;
 }
 .pick-total small { font-size: 11px; font-weight: 600; color: var(--ink-3); margin-left: 1px; }
-.pick-head .segmented { flex: 1; background: var(--surface); }
+.pick-head .segmented { flex: 0 1 240px; background: var(--surface); }
+.pick-head .segmented button { min-width: 84px; }
 .pick-head .segmented button { min-height: 36px; font-size: 13.5px; }
 
 /* 팝업 안 미니 스코어카드 — 총타수가 같아도 홀별로 가릴 수 있게 나란히 보여 준다 */
@@ -1370,9 +1342,11 @@ table.map-card {
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
 }
-table.map-card col.name { width: 15%; }
-table.map-card col.hole { width: 8.3%; }
-table.map-card col.total { width: 10.3%; }
+/* 이름 + 9홀 + ± + T = 100% (더하면 딱 맞아야 머리칸과 값칸이 어긋나지 않는다) */
+table.map-card col.name { width: 13%; }
+table.map-card col.hole { width: 7.6%; }
+table.map-card col.over { width: 9.6%; }
+table.map-card col.total { width: 9%; }
 
 table.map-card th,
 table.map-card td {
@@ -1394,6 +1368,10 @@ table.map-card tbody th {
 }
 table.map-card tbody td { font-weight: 600; }
 table.map-card .t { font-weight: 750; }
+table.map-card .ov { font-weight: 700; color: var(--ink-2); }
+/* 합계 줄 — 위 두 줄을 더한 것이라 한 단계 진하게 */
+table.map-card tr.sum th, table.map-card tr.sum td { border-bottom: 0; padding-top: 5px; }
+table.map-card tr.sum .ov, table.map-card tr.sum .t { font-size: 12.5px; font-weight: 800; color: var(--ink-1); }
 table.map-card td.miss { color: var(--ink-3); }
 table.map-card td.under { color: var(--series-1); font-weight: 750; }
 table.map-card td.blowup { color: var(--danger); }

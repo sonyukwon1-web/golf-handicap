@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import HallOfFame from './components/HallOfFame.jsx'
 import HoleRoundForm from './components/HoleRoundForm.jsx'
-import PenaltyRoulette from './components/PenaltyRoulette.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
 import RoundList from './components/RoundList.jsx'
@@ -15,8 +14,8 @@ import { exportFile, importFile, load, save } from './lib/storage.js'
 
 const TABS = [
   { id: 'home', label: '홈' },
-  { id: 'rounds', label: '라운드' },
   { id: 'fame', label: '랭킹' },
+  { id: 'rounds', label: '라운드' },
   { id: 'input', label: '입력' },
 ]
 
@@ -31,7 +30,6 @@ export default function App() {
   const [tab, setTab] = useState(tabFromHash)
   const [message, setMessage] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)  // 방금 저장한 라운드
-  const [rouletteId, setRouletteId] = useState(null)
   const [inputMode, setInputMode] = useState('holes')
   const fileRef = useRef(null)
 
@@ -91,18 +89,11 @@ export default function App() {
   const deleteRound = (id) =>
     setData((d) => ({ ...d, rounds: d.rounds.filter((r) => r.id !== id) }))
 
-  const setPenalties = (penalties) => setData((d) => ({ ...d, penalties }))
-
-  const assignPenalty = (roundId, text, members) =>
-    setData((d) => ({
-      ...d,
-      rounds: d.rounds.map((r) => (r.id === roundId ? { ...r, penalty: { text, members } } : r)),
-    }))
-
-  const { stats } = computeStats(rounds)
+  /* 라운드마다의 순위·꼴찌 — 우승 발표 화면이 이걸 본다 */
   const outcomes = roundOutcomes(rounds)
+  const { stats } = computeStats(rounds)
+  /** 방금 저장한 라운드 (저장 직후 우승자를 띄운다) */
   const celebrating = celebrateId ? outcomes.find((o) => o.id === celebrateId) : null
-  const rouletteRound = rouletteId ? outcomes.find((o) => o.id === rouletteId) : null
 
   const onExport = () => {
     if (roundCount === 0) {
@@ -227,7 +218,7 @@ export default function App() {
             </div>
 
             {inputMode === 'holes'
-              ? <HoleRoundForm onSave={addRounds} stats={stats} />
+              ? <HoleRoundForm onSave={addRounds} stats={stats} rounds={rounds} />
               : <RoundForm onSave={addRounds} />}
           </section>
         )}
@@ -241,30 +232,9 @@ export default function App() {
       </main>
 
       {celebrating && (
-        <WinnerCelebration
-          round={celebrating}
-          onClose={() => setCelebrateId(null)}
-          onPenalty={() => {
-            setRouletteId(celebrating.id)
-            setCelebrateId(null)
-          }}
-        />
+        <WinnerCelebration round={celebrating} onClose={() => setCelebrateId(null)} />
       )}
 
-      {rouletteRound && (
-        <PenaltyRoulette
-          losers={rouletteRound.losers}
-          penalties={data.penalties}
-          onChangePenalties={setPenalties}
-          onClose={() => setRouletteId(null)}
-          onDecided={(text, finalLoser) => {
-            const targets = finalLoser ? [finalLoser] : rouletteRound.losers
-            assignPenalty(rouletteRound.id, text, targets)
-            setRouletteId(null)
-            setMessage({ kind: 'info', text: `${targets.join(', ')} 벌칙: ${text}` })
-          }}
-        />
-      )}
     </div>
   )
 }

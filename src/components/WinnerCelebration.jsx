@@ -2,9 +2,8 @@ import Confetti from './Confetti.jsx'
 import { fmtDate } from '../lib/handicap.js'
 
 /** 라운드 저장 직후 뜨는 우승자 발표 화면. */
-export default function WinnerCelebration({ round, onPenalty, onClose }) {
+export default function WinnerCelebration({ round, onClose }) {
   const winners = round.entries.filter((e) => e.rank === 1)
-  const losers = round.losers
 
   return (
     <div className="modal-backdrop celebrate" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -29,10 +28,7 @@ export default function WinnerCelebration({ round, onPenalty, onClose }) {
         </ol>
 
         <div className="modal-foot">
-          <button type="button" className="btn" onClick={onClose}>닫기</button>
-          {losers.length > 0 && (
-            <button type="button" className="btn primary" onClick={onPenalty}>🎯 벌칙 정하기</button>
-          )}
+          <button type="button" className="btn primary" onClick={onClose}>닫기</button>
         </div>
       </div>
     </div>

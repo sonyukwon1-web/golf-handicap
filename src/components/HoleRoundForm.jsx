@@ -20,18 +20,38 @@ const blank = () => ({
 })
 
 /** 스코어카드 그대로 한 라운드를 홀별로 적는다. OCR 결과도 여기로 들어온다. */
-export default function HoleRoundForm({ onSave, stats }) {
+export default function HoleRoundForm({ onSave, stats, rounds = [] }) {
   const [draft, setDraft] = useState(blank)
   const [claimedTotals, setClaimedTotals] = useState({})
   const [error, setError] = useState('')
   const [savedTick, setSavedTick] = useState(0)
+  /** 카드에서 날짜를 못 읽었다 — 사람이 골라야 한다 */
+  const [dateUnread, setDateUnread] = useState(false)
 
-  const setMeta = (patch) => { setDraft((d) => ({ ...d, ...patch })); setError('') }
+  const setMeta = (patch) => {
+    setDraft((d) => ({ ...d, ...patch }))
+    setError('')
+    if ('date' in patch) setDateUnread(false)
+  }
 
   const applyOcr = ({ meta, pars, overs, order, claimedTotals: claimed }) => {
+    /*
+      ══════════════════════════════════════════════════════════
+      **못 읽은 날짜를 오늘로 슬쩍 채우지 않는다.**
+
+      여태 `meta.date || d.date` 였다. d.date 의 첫 값이 오늘이라, 카드에서
+      날짜를 못 읽으면 **오늘 날짜가 조용히 들어앉았다.** 6월 27일과 28일에
+      친 두 라운드를 28일에 한꺼번에 올렸더니 둘 다 28일이 된 것이 그 때문이다
+      — 같은 날 같은 골프장 두 건이 되어 기록이 통째로 어긋났다.
+
+      못 읽었으면 **비운다.** 저장은 어차피 빈 날짜를 막으므로(아래 submit),
+      사람이 반드시 한 번 보게 된다.
+      ══════════════════════════════════════════════════════════
+    */
+    setDateUnread(!meta.date)
     setDraft((d) => ({
       ...d,
-      date: meta.date || d.date,
+      date: meta.date || '',
       course: meta.course || d.course,
       courseFront: meta.courseFront || d.courseFront,
       courseBack: meta.courseBack || d.courseBack,
@@ -46,6 +66,17 @@ export default function HoleRoundForm({ onSave, stats }) {
     setClaimedTotals(claimed || {})
     setError('')
   }
+
+  /*
+    **같은 날 같은 골프장이 이미 있으면 물어본다.**
+
+    36홀을 도는 일이 없진 않지만 드물다. 그보다는 카드의 날짜를 잘못 읽었을 때가
+    훨씬 잦다 — 실제로 27일과 28일 라운드가 둘 다 28일로 담긴 적이 있다. 막지는
+    않는다(진짜 두 번 쳤을 수 있다). 저장하기 전에 한 번 눈에 띄게만 한다.
+  */
+  const sameDayCourse = draft.course.trim()
+    ? rounds.find((r) => r.date === draft.date && (r.course || '').trim() === draft.course.trim())
+    : null
 
   const played = MEMBERS.filter((m) => grossOf(draft.pars, draft.overs[m]).filled > 0)
 
@@ -80,7 +111,6 @@ export default function HoleRoundForm({ onSave, stats }) {
       order: draft.order.filter((m) => played.includes(m)),
       holes,
       scores,
-      penalty: null,
       createdAt: Date.now(),
     }]) || {}
 
@@ -96,6 +126,7 @@ export default function HoleRoundForm({ onSave, stats }) {
     setDraft(blank())
     setClaimedTotals({})
     setError('')
+    setDateUnread(false)
     setSavedTick((n) => n + 1) // 대기 중인 다음 스코어카드가 있으면 이어서 읽는다
   }
 
@@ -109,7 +140,17 @@ export default function HoleRoundForm({ onSave, stats }) {
         <div className="meta-grid">
           <div className="field">
             <label htmlFor="h-date">날짜</label>
-            <input id="h-date" type="date" value={draft.date} onChange={(e) => setMeta({ date: e.target.value })} />
+            <input
+              id="h-date"
+              type="date"
+              value={draft.date}
+              onChange={(e) => setMeta({ date: e.target.value })}
+              data-warn={dateUnread || undefined}
+            />
+            {dateUnread && <p className="field-warn">카드에서 날짜를 못 읽었습니다. 골라 주세요.</p>}
+            {!dateUnread && sameDayCourse && (
+              <p className="field-warn">이 날짜에 {sameDayCourse.course} 라운드가 이미 있습니다. 날짜가 맞나요?</p>
+            )}
           </div>
           <div className="field">
             <label htmlFor="h-tee">티오프 <span className="opt">선택</span></label>
