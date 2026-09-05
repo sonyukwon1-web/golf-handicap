@@ -424,7 +424,14 @@ export default function App() {
             {평균순위 && <AverageBoard rounds={사람별5 ? rounds : 기간라운드} perMember={사람별5} />}
 
             <HallOfFame rounds={기간라운드} period={기간이름} 통산={평균보기} />
-            <RivalMatch rounds={기간라운드} period={기간이름} />
+            {/*
+              **라이벌 매치만 위 보기를 따라가지 않는다.**
+
+              둘이 여태 몇 번 붙어 몇 번 이겼나 — 이것은 기간을 잘라 볼 값이
+              아니다. 한 라운드를 골라 놓으면 '1전 1승' 이 되어 상대전적이라는
+              말 자체가 무의미해진다. 늘 친 라운드 전부로 센다.
+            */}
+            <RivalMatch rounds={rounds} period="전체 라운드" />
           </section>
         )}
 
