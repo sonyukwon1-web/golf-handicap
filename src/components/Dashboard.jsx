@@ -3,6 +3,10 @@ import { badges as computeBadges } from '../lib/awards.js'
 import TrendChart from './TrendChart.jsx'
 import RoundList from './RoundList.jsx'
 import TrashTalk from './TrashTalk.jsx'
+import MemberAvatar from './MemberAvatar.jsx'
+import PhotoPicker from './PhotoPicker.jsx'
+import RankOptions from './RankOptions.jsx'
+import { loadPhotos } from '../lib/photos.js'
 
 /**
  * 핸디 한 줄 — [색 점] 이름 · 뱃지 / 평균·라운드 / 빼주는 타수.
@@ -19,10 +23,11 @@ import TrashTalk from './TrashTalk.jsx'
  * `−3` 이라고 적으면 91 → 88 이 그 자리에서 이어진다. 기준자는 `0`.
  * ══════════════════════════════════════════════════════════════════
  */
-function HandicapRow({ s, slot, badges }) {
+function HandicapRow({ s, slot, badges, photos }) {
   return (
     <li className="hd-row" style={{ '--dot': `var(--series-${slot})` }}>
-      <i className="swatch" aria-hidden="true" />
+      {/* 이름 앞에 얼굴 — 사진이 없으면 성 한 글자가 색 테두리 안에 뜬다 */}
+      <MemberAvatar member={s.member} src={photos?.[s.member]} size={40} />
       <div className="hd-who">
         <span className="hd-name">
           {s.member}
@@ -51,6 +56,7 @@ function HandicapRow({ s, slot, badges }) {
 }
 
 export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDelete, onGoInput }) {
+  const photos = loadPhotos()
   const { stats } = computeStats(rounds, ranking)
   const badges = computeBadges(rounds, ranking)
 
@@ -81,39 +87,10 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
           잘 쳐도 못 이기는 판이 되기 때문에, 몇 타까지 봐줄지는 그때그때 정한다.
           ══════════════════════════════════════════════════════════
         */}
-        <div className="rank-opts card">
-          <button
-            type="button"
-            className={`toggle ${ranking.useHandicap ? 'on' : ''}`}
-            role="switch"
-            aria-checked={ranking.useHandicap}
-            onClick={() => onRanking({ useHandicap: !ranking.useHandicap })}
-          >
-            <i aria-hidden="true" />
-            <span>핸디 적용해서 순위 보기</span>
-          </button>
-
-          <label className="cap">
-            <span>상한</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min="0"
-              max="54"
-              placeholder="없음"
-              value={ranking.cap ?? ''}
-              onChange={(e) => {
-                const v = e.target.value.trim()
-                const n = Number(v)
-                onRanking({ cap: v === '' || !Number.isFinite(n) || n < 0 ? null : Math.round(n) })
-              }}
-            />
-            <span className="unit">타</span>
-          </label>
-        </div>
+        <RankOptions ranking={ranking} onRanking={onRanking} />
         <ul className="card hdcp-list">
           {MEMBERS.map((m, i) => (
-            <HandicapRow key={m} s={stats[m]} slot={i + 1} badges={badges[m]} />
+            <HandicapRow key={m} s={stats[m]} slot={i + 1} badges={badges[m]} photos={photos} />
           ))}
         </ul>
       </section>
@@ -145,6 +122,9 @@ export default function Dashboard({ rounds, ranking, onRanking, onUpdate, onDele
           <RoundList rounds={rounds} ranking={ranking} onUpdate={onUpdate} onDelete={onDelete} limit={5} />
         )}
       </section>
+
+      {/* 사진은 이 자리에서 등록한다 — 등록하면 이름 나오는 모든 자리가 얼굴로 바뀐다 */}
+      <PhotoPicker />
     </>
   )
 }

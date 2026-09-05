@@ -4,6 +4,7 @@ import HallOfFame from './components/HallOfFame.jsx'
 import HoleRoundForm from './components/HoleRoundForm.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
+import RankOptions from './components/RankOptions.jsx'
 import RoundList from './components/RoundList.jsx'
 import SeasonRanking from './components/SeasonRanking.jsx'
 import WinnerCelebration from './components/WinnerCelebration.jsx'
@@ -184,6 +185,8 @@ export default function App() {
               <h2>전체 라운드</h2>
               <span className="hint">{roundCount}개</span>
             </div>
+            {/* 순위를 보는 자리에 켜고 끄는 자리를 함께 둔다 */}
+            <RankOptions ranking={ranking} onRanking={setRanking} />
             <RoundList rounds={rounds} ranking={ranking} onUpdate={updateRound} onDelete={deleteRound} />
           </section>
         )}
@@ -194,6 +197,7 @@ export default function App() {
               <h2>명예의 전당 &amp; 흑역사관</h2>
               <span className="hint">{roundCount}라운드 누적</span>
             </div>
+            <RankOptions ranking={ranking} onRanking={setRanking} />
             <HallOfFame rounds={rounds} ranking={ranking} />
             <SeasonRanking rounds={rounds} ranking={ranking} />
             <RivalMatch rounds={rounds} ranking={ranking} />

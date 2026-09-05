@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { MEMBERS, fmtDate } from '../lib/handicap.js'
 import { headToHead } from '../lib/awards.js'
 import { josaWith } from '../lib/josa.js'
+import MemberAvatar from './MemberAvatar.jsx'
+import { loadPhotos } from '../lib/photos.js'
 
 /** 두 명을 골라 1:1 상대전적을 본다. 승패는 핸디를 적용한 뒤로 센다. */
 export default function RivalMatch({ rounds, ranking }) {
@@ -19,6 +21,7 @@ export default function RivalMatch({ rounds, ranking }) {
   }
 
   const h = headToHead(rounds, a, b, ranking)
+  const photos = loadPhotos()
   const total = h.aWins + h.bWins || 1
 
   return (
@@ -31,6 +34,7 @@ export default function RivalMatch({ rounds, ranking }) {
       <div className="rival-pick">
         <label>
           <span className="sr-only">첫 번째 멤버</span>
+          <MemberAvatar member={a} src={photos[a]} size={76} />
           <select value={a} onChange={(e) => swapIfSame('a', e.target.value)}>
             {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
@@ -38,6 +42,7 @@ export default function RivalMatch({ rounds, ranking }) {
         <span className="vs">VS</span>
         <label>
           <span className="sr-only">두 번째 멤버</span>
+          <MemberAvatar member={b} src={photos[b]} size={76} />
           <select value={b} onChange={(e) => swapIfSame('b', e.target.value)}>
             {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>

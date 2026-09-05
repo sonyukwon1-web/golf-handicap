@@ -1,5 +1,7 @@
 import { MEMBERS } from '../lib/handicap.js'
 import { memberRecords } from '../lib/awards.js'
+import MemberAvatar from './MemberAvatar.jsx'
+import { loadPhotos } from '../lib/photos.js'
 import { holeStats } from '../lib/holes.js'
 
 const fmt1 = (v) => (v === null || v === undefined ? '–' : (v > 0 ? '+' : '') + v.toFixed(1))
@@ -76,7 +78,7 @@ function HoleAwards({ rounds }) {
 const MEDALS = ['🥇', '🥈', '🥉']
 const SHAME = ['💀', '😵', '🥲']
 
-function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS }) {
+function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS, photos = {} }) {
   if (rows.length === 0) return null
 
   return (
@@ -88,7 +90,8 @@ function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS
       <ol className="fame-list">
         {rows.map((r, i) => (
           <li key={r.member}>
-            <span className="fame-medal" aria-hidden="true">{marks[i] || ''}</span>
+            {/* 메달 이모지 자리에 얼굴 — 1~3위 표시는 아바타의 rank 가 대신한다 */}
+            <MemberAvatar member={r.member} src={photos[r.member]} size={34} rank={i + 1} />
             <span className="fame-name">{r.member}</span>
             <span className="fame-bar" aria-hidden="true">
               <i style={{ width: `${rows[0][valueKey] ? (r[valueKey] / rows[0][valueKey]) * 100 : 0}%` }} />
@@ -103,6 +106,7 @@ function Ranking({ title, hint, rows, valueKey, unit, icon, tone, marks = MEDALS
 
 export default function HallOfFame({ rounds, ranking }) {
   const rec = memberRecords(rounds, ranking)
+  const photos = loadPhotos()
   const played = MEMBERS.filter((m) => rec[m].played > 0)
 
   if (played.length === 0) {
@@ -120,12 +124,12 @@ export default function HallOfFame({ rounds, ranking }) {
   return (
     <>
       <Ranking
-        title="명예의 전당" hint="핸디 적용 후 1등 횟수" icon="👑" tone="fame-good"
-        rows={wins} valueKey="wins" unit="승"
+        title="명예의 전당" hint={`${ranking?.useHandicap ? '핸디 적용 후' : '친 타수 그대로'} 1등 횟수`} icon="👑" tone="fame-good"
+        rows={wins} valueKey="wins" unit="승" photos={photos}
       />
       <Ranking
-        title="흑역사관" hint="핸디 적용 후 꼴찌 횟수" icon="🫠" tone="fame-bad"
-        rows={lasts} valueKey="lasts" unit="회" marks={SHAME}
+        title="흑역사관" hint={`${ranking?.useHandicap ? '핸디 적용 후' : '친 타수 그대로'} 꼴찌 횟수`} icon="🫠" tone="fame-bad"
+        rows={lasts} valueKey="lasts" unit="회" marks={SHAME} photos={photos}
       />
 
       <HoleAwards rounds={rounds} />

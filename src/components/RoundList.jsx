@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { MEMBERS, computeRoundDetails, fmtDate } from '../lib/handicap.js'
+import MemberAvatar from './MemberAvatar.jsx'
+import { loadPhotos } from '../lib/photos.js'
 import { FRONT, HOLES, grossOf, hasHoleData, overTotal, parTotal } from '../lib/holes.js'
 
 const fmtOver = (v) => (v > 0 ? `+${v}` : String(v))
@@ -150,6 +152,7 @@ export default function RoundList({ rounds, ranking, onUpdate, onDelete, limit }
   const [editId, setEditId] = useState(null)
 
   const details = computeRoundDetails(rounds, ranking).reverse()
+  const photos = loadPhotos()
   const shown = limit ? details.slice(0, limit) : details
 
   if (shown.length === 0) {
@@ -187,7 +190,8 @@ export default function RoundList({ rounds, ranking, onUpdate, onDelete, limit }
               <span className="round-winner">
                 {winner && (
                   <>
-                    <span className="trophy" aria-hidden="true">🏆</span>
+                    {/* 트로피 이모지 자리에 우승자 얼굴 — 1위라 금테가 둘린다 */}
+                    <MemberAvatar member={winner.member} src={photos[winner.member]} size={42} rank={1} />
                     <b>{winner.member}</b>
                     <span className="round-course">{winner.net}타</span>
                   </>

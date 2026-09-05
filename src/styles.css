@@ -113,6 +113,139 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.28);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   낙원 골프 — 새 디자인 토큰 (handoff/nakwon-tokens.css)
+
+   **위 블록보다 뒤에 둔다.** 같은 이름을 다시 적어 값만 갈아 끼우는 방식이라,
+   앞에 두면 옛 값이 이겨 아무것도 안 바뀐다. 위 블록은 여기서 안 다루는 것들
+   (--green 무리 · --danger · --bar-* · --font)을 계속 대 주므로 남겨 둔다.
+   ══════════════════════════════════════════════════════════════ */
+/* ─────────────────────────────────────────────────────────────
+   낙원 골프 — 디자인 토큰 (styles.css 의 :root / dark 블록에 덮어쓰기)
+   기존 --bg / --surface / --ink / --series-* 이름을 그대로 씁니다.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  /* 배경: 단색 대신 잔디 그라디언트. body 에 붙입니다 */
+  --bg: #eef3ea;
+  --bg-grad: linear-gradient(180deg, #f4fbf0, #e6f5dd);
+  --surface: #ffffff;
+  --surface-2: #f7fbf4;
+  --surface-3: #e9f0e4;
+  --line: #dfe7d8;
+  --line-strong: #cbd8c2;
+
+  --ink: #14251b;
+  --ink-2: #5b7a64;
+  --ink-3: #96a89a;
+
+  /* 프라이머리 = 그린, 축하·1위 전용 = 골드. 두 색만 씁니다 */
+  --primary: #1baf7a;
+  --primary-2: #28c78d;
+  --gold: #eda100;
+  --gold-light: #ffe9a8;
+  --gold-border: #f2d98a;
+
+  /* 벙커 씬 (꼴찌 연출) */
+  --grass-1: #a8dc8f;
+  --grass-2: #7ec964;
+  --sand: #f0dba8;
+  --sand-2: #f7e8c0;
+  --sand-line: #e3c98d;
+  --rain: #7ec4ff;
+
+  /* 멤버 고정색 — MEMBER_COLORS 와 같은 값 */
+  --series-1: #2a78d6;  /* 최진규 */
+  --series-2: #eb6834;  /* 최문창 */
+  --series-3: #1baf7a;  /* 손유권 */
+  --series-4: #eda100;  /* 이지수 */
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 12px 34px rgba(20, 53, 31, .14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b110d;
+    --bg-grad: linear-gradient(180deg, #131b16, #0b110d);
+    --surface: #18201a;
+    --surface-2: #1e2820;
+    --surface-3: #26332a;
+    --line: #2c3a2f;
+    --line-strong: #3b4d3f;
+
+    --ink: #eef4ef;
+    --ink-2: #b2c2b6;
+    --ink-3: #86988b;
+
+    --primary: #199e70;
+    --primary-2: #28c78d;
+    --gold: #d9b45b;
+    --gold-light: #f2dc9e;
+    --gold-border: #6d5827;
+
+    --grass-1: #2c4433;
+    --grass-2: #1e3327;
+    --sand: #6b5b3c;
+    --sand-2: #83714c;
+    --sand-line: #9c8659;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+
+    --shadow: 0 12px 34px rgba(0, 0, 0, .4);
+  }
+}
+
+body { background: var(--bg-grad); background-attachment: fixed; }
+
+/* ── 아바타 ─────────────────────────────────────────────── */
+.avatar {
+  border-radius: 50%;
+  padding: 2.5px;
+  flex: none;
+  box-sizing: border-box;
+  background: var(--ring, var(--line));
+}
+.avatar > img,
+.avatar > .avatar-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+.avatar[data-rank='1'] {
+  background: linear-gradient(160deg, var(--gold-light), var(--gold));
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .55), 0 8px 20px rgba(20, 53, 31, .18);
+}
+
+/* ── 1위 카드 / 꼴찌 카드 ───────────────────────────────── */
+.card[data-rank='1'] { border: 2px solid var(--gold-border); }
+.rank-num { font-family: Oswald, sans-serif; font-weight: 700; color: var(--ink-3); }
+.rank-num[data-first] { color: var(--gold); }
+
+/* ── 등장 모션 (앱 전체에서 이거 하나만) ───────────────── */
+@keyframes riseUp { from { transform: translateY(14px); opacity: 0 } to { transform: none; opacity: 1 } }
+.rise { animation: riseUp .4s both }
+.rise:nth-child(2) { animation-delay: .06s }
+.rise:nth-child(3) { animation-delay: .12s }
+.rise:nth-child(4) { animation-delay: .18s }
+
+/* ── 벙커 씬 모션 ───────────────────────────────────────── */
+@keyframes rainFall { 0% { transform: rotate(12deg) translateY(-6px); opacity: 0 } 25% { opacity: .9 } 100% { transform: rotate(12deg) translateY(52px); opacity: 0 } }
+@keyframes tearFall { 0% { transform: translateY(0); opacity: 0 } 25% { opacity: 1 } 100% { transform: translateY(26px); opacity: 0 } }
+@keyframes sinkBob  { 0%, 100% { transform: rotate(-7deg) translateY(0) } 50% { transform: rotate(-7deg) translateY(3px) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, [class*='bunker'] * { animation: none !important }
+}
+
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; padding: 0; }
@@ -302,25 +435,38 @@ main.shell { padding-top: 20px; }
 }
 .rank-opts .cap .unit { color: var(--ink-3); }
 
+/* '기준' 처럼 이름 옆에 붙는 작은 딱지 */
+.badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--green-soft);
+  color: var(--green-ink);
+  letter-spacing: 0.02em;
+}
+
+/* 색 조각 — 추이 그래프 범례와 요일 표에서 쓴다 (선 색과 같은 색) */
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--dot);
+  flex-shrink: 0;
+}
+
 /* ── 핸디 목록 ────────────────────────────────────────── */
 .hdcp-list { list-style: none; margin: 0; padding: 4px 0; }
 
 .hd-row {
   display: grid;
-  grid-template-columns: 4px 1fr auto auto;
+  /* 첫 칸은 얼굴(40px) — 색 막대 4px 이던 자리다 */
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 11px;
+  padding: 9px 14px;
 }
 .hd-row + .hd-row { border-top: 1px solid var(--line); }
-
-/* 이름 앞 색 막대 — 추이 그래프의 선 색과 같은 색이라 두 화면이 이어진다 */
-.hd-row .swatch {
-  width: 4px;
-  height: 22px;
-  border-radius: 2px;
-  background: var(--dot);
-}
 
 .hd-who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 /* 뱃지 줄은 카드 안에서 쓰던 위 여백(10px)을 여기서는 걷어낸다 */
@@ -353,7 +499,7 @@ main.shell { padding-top: 20px; }
 
 /* 아주 좁은 화면에서는 평균·라운드를 이름 아래로 내린다 */
 @media (max-width: 360px) {
-  .hd-row { grid-template-columns: 4px 1fr auto; }
+  .hd-row { grid-template-columns: auto 1fr auto; }
   .hd-stat { grid-column: 2; grid-row: 2; }
 }
 
@@ -934,7 +1080,7 @@ input[data-warn] { border-color: var(--warn, #b26a00); }
   gap: 10px;
   margin-bottom: 14px;
 }
-.rival-pick label { flex: 1; min-width: 0; }
+.rival-pick label { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .rival-pick select {
   width: 100%;
   background: var(--surface-2);
