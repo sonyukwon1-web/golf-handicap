@@ -4,6 +4,7 @@ import HallOfFame from './components/HallOfFame.jsx'
 import HoleRoundForm from './components/HoleRoundForm.jsx'
 import RivalMatch from './components/RivalMatch.jsx'
 import RoundForm from './components/RoundForm.jsx'
+import Rules from './components/Rules.jsx'
 import DeviceSync from './components/DeviceSync.jsx'
 import AverageBoard from './components/AverageBoard.jsx'
 import Podium from './components/Podium.jsx'
@@ -20,6 +21,7 @@ import { loadPhotos } from './lib/photos.js'
 const TABS = [
   { id: 'home', label: '홈' },
   { id: 'fame', label: '랭킹' },
+  { id: 'rules', label: '규칙' },
   { id: 'rounds', label: '라운드' },
   { id: 'input', label: '입력' },
 ]
@@ -343,6 +345,16 @@ export default function App() {
           />
         )}
 
+        {tab === 'rules' && (
+          <section className="section">
+            <div className="section-head">
+              <h2>우리 규칙</h2>
+              <span className="hint">넷이 합의한 것</span>
+            </div>
+            <Rules />
+          </section>
+        )}
+
         {tab === 'rounds' && (
           <section className="section">
             <div className="section-head">
@@ -463,7 +475,7 @@ export default function App() {
           </section>
         )}
 
-        {tab !== 'input' && (
+        {tab !== 'input' && tab !== 'rules' && (
           <p className="foot-note">
             기록과 사진은 <b>기기끼리 저절로 맞춰집니다</b> — 휴대폰에서 넣은 것이 PC 에도 뜹니다.
           </p>

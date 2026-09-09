@@ -360,6 +360,11 @@ button { cursor: pointer; }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 
+/* 탭이 다섯이 되면서 좁은 폰에서 글자가 눌린다 — 여백을 먼저 줄인다 */
+@media (max-width: 380px) {
+  .tabs button { padding: 9px 4px; font-size: 13px; }
+}
+
 /* .shell 의 `padding: 0 16px` 이 요소 선택자를 이겨서 위쪽 여백이 먹지 않았다.
    같은 자리에 붙여 우선순위를 맞춘다. */
 main.shell { padding-top: 20px; }
@@ -2042,3 +2047,99 @@ table.score-grid .ocol {
 }
 table.score-grid .par-row .ocol { background: var(--green-soft); }
 table.score-grid .tcol { border-right: 1px solid var(--line); }
+
+/* ── 우리 규칙 ────────────────────────────────────────── */
+.rules-stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* 핸디 — 얼굴 · 이름 · 받는 타수 */
+.rules-handi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rules-handi li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+}
+.rules-handi b { font-weight: 700; }
+.rules-stroke {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+}
+/* 기준이 되는 사람은 숫자가 아니라 '기준' — 강조하지 않는다 */
+.rules-handi li:first-child .rules-stroke { font-size: 12.5px; font-weight: 650; color: var(--ink-3); }
+
+/* 둘씩 붙었을 때 오가는 타수 */
+.rules-pairs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 6px;
+}
+.rules-pairs li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.rules-pairs b {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 말로 된 규칙 — 초록 점을 앞에 찍는다 */
+.rules-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.rules-list li {
+  position: relative;
+  padding-left: 15px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.rules-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+/* 덧붙이는 말 — 규칙 본문보다 한 단 작게 */
+.rules-note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--green-soft);
+  color: var(--green-ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: 600;
+}
