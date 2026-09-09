@@ -28,6 +28,9 @@ const 주고받기 = 핸디.flatMap((a, i) =>
   핸디.slice(i + 1).map((b) => ({ 주는이: a.member, 받는이: b.member, 차: b.stroke - a.stroke })),
 )
 
+/** 핸디를 안 받는 사람 하나와, 그에게서 받는 나머지 — 부챗살의 뿌리와 가지 */
+const [기준, ...받는이들] = 핸디
+
 /** 넷 다 성이 다르지 않아 이름 두 자로 부른다 — 좁은 칸에 화살표까지 들어가야 한다 */
 const 이름 = (m) => m.slice(1)
 
@@ -90,29 +93,30 @@ export default function Rules() {
         </div>
 
         {/*
-          **사다리로 세운다.** 넷을 한 줄로 세우고 사이마다 몇 타가 오가는지
-          화살표에 적으면, 표를 읽지 않아도 순서와 간격이 한눈에 들어온다.
+          **기준 한 사람에서 부챗살로 뻗는다.**
+
+          여태 사다리로 세워 사이마다 5타씩 달았더니, 문창이가 지수에게 몇 타를
+          주는지는 5+5+5 를 머리로 더해야 나왔다. 셋 다 문창이한테서 받는 것이니
+          문창이를 위에 두고 **받는 사람마다 화살표 하나**를 그린다.
         */}
-        <ol className="handi-chain">
-          {핸디.map((h, i) => {
-            const 다음 = 핸디[i + 1]
-            return (
+        <div className="handi-fan">
+          <div className="fan-top">
+            <MemberAvatar member={기준.member} src={photos[기준.member]} size={38} />
+            <b>{기준.member}</b>
+            <span className="fan-base">기준</span>
+          </div>
+
+          <ul className="fan-branches">
+            {받는이들.map((h) => (
               <li key={h.member}>
-                <div className="chain-row">
-                  <MemberAvatar member={h.member} src={photos[h.member]} size={34} />
-                  <b>{h.member}</b>
-                  <span className="rules-stroke">{h.stroke === 0 ? '기준' : `+${h.stroke}타`}</span>
-                </div>
-                {다음 && (
-                  <div className="chain-arrow" aria-hidden="true">
-                    <i />
-                    <span>{다음.stroke - h.stroke}타</span>
-                  </div>
-                )}
+                <i className="fan-head" aria-hidden="true" />
+                <MemberAvatar member={h.member} src={photos[h.member]} size={32} />
+                <b>{h.member}</b>
+                <span className="rules-stroke">{h.stroke}타</span>
               </li>
-            )
-          })}
-        </ol>
+            ))}
+          </ul>
+        </div>
 
         <p className="rules-note">
           각자 차이 나는 만큼 시작할 때 서로 지급 — 화살표는 <b>주는 쪽 → 받는 쪽</b>
