@@ -19,20 +19,18 @@ const 핸디 = [
 ]
 
 /*
-  둘이 붙었을 때 누가 누구에게 몇 타를 주나.
+  **누가 누구에게 몇 타를 주나 — 여섯 갈래 전부.**
 
-  화살표는 **잘 치는 쪽 → 못 치는 쪽**. 여태 `문창 ↔ 지수 15타` 라고 양쪽
-  화살표로만 적어 두었더니, 숫자는 맞는데 누가 주는 쪽인지가 안 보였다.
+  화살표는 **잘 치는 쪽 → 못 치는 쪽**. 문창이 것만 그렸더니 진규·유권·지수
+  끼리 붙었을 때가 안 보여, 아래 칸에 따로 목록을 하나 더 두어야 했다.
+  주는 사람마다 부챗살을 하나씩 두면 그 목록이 통째로 필요 없어진다.
+
+  마지막 사람(가장 많이 받는 이)은 줄 사람이 없어 부챗살이 없다.
 */
-const 주고받기 = 핸디.flatMap((a, i) =>
-  핸디.slice(i + 1).map((b) => ({ 주는이: a.member, 받는이: b.member, 차: b.stroke - a.stroke })),
-)
-
-/** 핸디를 안 받는 사람 하나와, 그에게서 받는 나머지 — 부챗살의 뿌리와 가지 */
-const [기준, ...받는이들] = 핸디
-
-/** 넷 다 성이 다르지 않아 이름 두 자로 부른다 — 좁은 칸에 화살표까지 들어가야 한다 */
-const 이름 = (m) => m.slice(1)
+const 부챗살 = 핸디.slice(0, -1).map((주는이, i) => ({
+  주는이,
+  받는이들: 핸디.slice(i + 1).map((받는이) => ({ ...받는이, 차: 받는이.stroke - 주는이.stroke })),
+}))
 
 const 규칙 = [
   {
@@ -93,47 +91,37 @@ export default function Rules() {
         </div>
 
         {/*
-          **기준 한 사람에서 부챗살로 뻗는다.**
+          **주는 사람마다 부챗살 하나.**
 
-          여태 사다리로 세워 사이마다 5타씩 달았더니, 문창이가 지수에게 몇 타를
-          주는지는 5+5+5 를 머리로 더해야 나왔다. 셋 다 문창이한테서 받는 것이니
-          문창이를 위에 두고 **받는 사람마다 화살표 하나**를 그린다.
+          문창이 것 하나만 그리고 나머지는 아래에 목록으로 적었더니, 같은 것을
+          두 가지 모양으로 읽어야 했다. 셋을 나란히 그리면 여섯 갈래가 모두
+          화살표로 보이고 목록은 사라진다.
         */}
-        <div className="handi-fan">
-          <div className="fan-top">
-            <MemberAvatar member={기준.member} src={photos[기준.member]} size={38} />
-            <b>{기준.member}</b>
-            <span className="fan-base">기준</span>
-          </div>
+        {부챗살.map(({ 주는이, 받는이들 }) => (
+          <div className="handi-fan" key={주는이.member}>
+            <div className="fan-top">
+              <MemberAvatar member={주는이.member} src={photos[주는이.member]} size={38} />
+              <b>{주는이.member}</b>
+              <span className="fan-base">{주는이.stroke === 0 ? '기준' : `핸디 +${주는이.stroke}`}</span>
+            </div>
 
-          <ul className="fan-branches">
-            {받는이들.map((h) => (
-              <li key={h.member}>
-                <i className="fan-head" aria-hidden="true" />
-                <MemberAvatar member={h.member} src={photos[h.member]} size={32} />
-                <b>{h.member}</b>
-                <span className="rules-stroke">{h.stroke}타</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+            <ul className="fan-branches">
+              {받는이들.map((r) => (
+                <li key={r.member}>
+                  {/* 타수는 화살표 **위**에 — 줄 끝에 두면 어느 화살표의 값인지 눈이 한 번 더 간다 */}
+                  <span className="fan-tag">{r.차}타</span>
+                  <i className="fan-head" aria-hidden="true" />
+                  <MemberAvatar member={r.member} src={photos[r.member]} size={32} />
+                  <b>{r.member}</b>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
         <p className="rules-note">
           각자 차이 나는 만큼 시작할 때 서로 지급 — 화살표는 <b>주는 쪽 → 받는 쪽</b>
         </p>
-
-        <ul className="rules-pairs">
-          {주고받기.map((p) => (
-            <li key={`${p.주는이}-${p.받는이}`}>
-              <span className="rp-who">
-                {이름(p.주는이)}
-                <i aria-label="가 다음 사람에게">→</i>
-                {이름(p.받는이)}
-              </span>
-              <b>{p.차}타</b>
-            </li>
-          ))}
-        </ul>
       </div>
 
       {규칙.map((g) => (

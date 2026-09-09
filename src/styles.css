@@ -2051,8 +2051,13 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
 /* ── 우리 규칙 ────────────────────────────────────────── */
 .rules-stack { display: flex; flex-direction: column; gap: 12px; }
 
-/* 핸디 부챗살 — 기준 한 사람에서 나머지 셋으로 화살표가 뻗는다 */
+/* 핸디 부챗살 — 주는 사람마다 하나씩, 제 아래 사람 전부로 화살표가 뻗는다 */
 .handi-fan { padding: 2px 0 0; }
+.handi-fan + .handi-fan {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
 .fan-top {
   display: flex;
   align-items: center;
@@ -2069,6 +2074,7 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 2px 9px;
+  font-variant-numeric: tabular-nums;
 }
 
 .fan-branches {
@@ -2079,18 +2085,20 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   flex-direction: column;
   gap: 10px;
 }
-/* 줄마다 ㄴ자 꺾쇠 하나 — 세로는 위에서 내려오고, 가로는 얼굴로 들어간다.
-   세로선을 기준 얼굴 한가운데(38px 의 절반)에 맞춰 왼쪽 19px 에 세운다 */
+/*
+  줄마다 ㄴ자 꺾쇠 하나 — 세로는 위에서 내려오고, 가로는 얼굴로 들어간다.
+  세로선은 주는 이 얼굴 한가운데(38px 의 절반)에 맞춰 왼쪽 18px 에 세운다.
+  가로선 위에 타수가 앉으므로 얼굴은 화살촉 뒤(104px)에서 시작한다.
+*/
 .fan-branches li {
   position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-left: 48px;
+  padding-left: 104px;
   margin-top: 10px;
   font-size: 13.5px;
 }
-.fan-branches li:first-child { margin-top: 12px; }
 .fan-branches li b { font-weight: 700; }
 /* 세로 — 제 줄 한가운데까지 (위 줄과의 사이도 메워 한 줄기로 이어진다) */
 .fan-branches li::before {
@@ -2110,27 +2118,41 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   position: absolute;
   left: 18px;
   top: 50%;
-  width: 17px;
+  width: 74px;
   height: 2px;
   background: var(--line-strong);
 }
-/* 화살촉 */
+/*
+  **타수는 가로선 위에 앉힌다.** 카드와 같은 바탕을 깔아 선을 가리므로,
+  줄 위에 얹힌 이름표처럼 보인다.
+*/
+.fan-tag {
+  position: absolute;
+  /* 가로선(li::after)이 나중에 그려져 글자를 가로지른다 — 한 겹 위로 올린다 */
+  z-index: 1;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 46px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+/* 화살촉 — 가로선 끝 */
 .fan-head {
   position: absolute;
-  left: 35px;
+  left: 92px;
   top: 50%;
   transform: translateY(-50%);
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
   border-left: 6px solid var(--line-strong);
-}
-
-.rules-stroke {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  color: var(--green);
 }
 
 /* 둘씩 붙었을 때 오가는 타수 */
