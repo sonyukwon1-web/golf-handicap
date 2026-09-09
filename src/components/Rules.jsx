@@ -99,8 +99,8 @@ export default function Rules({ perStroke = 0, onPerStroke }) {
           적어 두면 넷 다 같은 금액을 본다 (기기끼리 맞춰지는 값이다).
         */}
         {/*
-          비어 있을 때는 **적으라고 눈에 띄어야** 하고, 적고 나면 조용해야 한다.
-          안 적은 동안만 초록 바탕에 안내를 함께 띄운다.
+          **기본은 비어 있다** — 그날 정한 금액을 그때 적는다.
+          안 적은 동안은 초록 바탕으로 눈에 띄고, 적고 나면 조용해진다.
         */}
         <div className="per-stroke-box" data-empty={perStroke ? undefined : 'true'}>
           <label className="per-stroke">
@@ -116,7 +116,6 @@ export default function Rules({ perStroke = 0, onPerStroke }) {
             />
             <em>원</em>
           </label>
-          {!perStroke && <p className="ps-hint">적어 두면 화살표마다 얼마인지 함께 뜹니다</p>}
         </div>
 
         {/*
