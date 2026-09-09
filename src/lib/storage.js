@@ -8,6 +8,7 @@ export const emptyData = () => ({
   members: MEMBERS,
   rounds: [],
   ranking: { ...DEFAULT_RANKING },
+  rules: { perStroke: 0 },
   updatedAt: 0,
 })
 
@@ -104,6 +105,15 @@ export function normalize(raw) {
   const cap = typeof r.cap === 'number' && Number.isFinite(r.cap) && r.cap > 0 ? Math.round(r.cap) : null
   const ranking = { cap }
 
+  /*
+    **타당 얼마인가** — 규칙 화면에서 적어 두면 화살표마다 금액이 함께 뜬다.
+    0 은 '안 적었음' 이고, 그때는 타수만 보인다. 기기끼리 맞춰지는 값이라
+    한 사람이 적으면 넷 다 같은 금액을 본다.
+  */
+  const perStrokeRaw = Number(raw.rules?.perStroke)
+  const perStroke =
+    Number.isFinite(perStrokeRaw) && perStrokeRaw > 0 ? Math.min(Math.round(perStrokeRaw), 10_000_000) : 0
+
   /* 벌칙은 걷어냈다 — 담겨 있던 값이 있어도 읽지 않고 버린다 */
   /* 언제 고친 것인가 — 기기끼리 맞출 때 늦은 쪽이 이긴다 (lib/sync.js) */
   const updatedAt = Number(raw.updatedAt)
@@ -113,6 +123,7 @@ export function normalize(raw) {
     members: MEMBERS,
     rounds: clean,
     ranking,
+    rules: { perStroke },
     updatedAt: Number.isFinite(updatedAt) ? updatedAt : 0,
   }
 }

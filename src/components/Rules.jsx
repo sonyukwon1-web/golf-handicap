@@ -78,7 +78,10 @@ const 규칙 = [
   },
 ]
 
-export default function Rules() {
+/** 12345 → '12,345' — 금액은 세 자리마다 끊어야 한 눈에 자릿수가 잡힌다 */
+const 돈 = (n) => n.toLocaleString('ko-KR')
+
+export default function Rules({ perStroke = 0, onPerStroke }) {
   const photos = loadPhotos()
 
   return (
@@ -89,6 +92,26 @@ export default function Rules() {
           <h3>🏌️ 핸디</h3>
           <span className="hint">최문창 기준</span>
         </div>
+
+        {/*
+          **타당 얼마인지 적어 두면 화살표마다 금액이 함께 뜬다.**
+
+          타수만 있으면 자리에서 다시 곱해야 했다 — 15타면 얼마더라. 한 번
+          적어 두면 넷 다 같은 금액을 본다 (기기끼리 맞춰지는 값이다).
+        */}
+        <label className="per-stroke">
+          <span>타당</span>
+          <input
+            inputMode="numeric"
+            placeholder="0"
+            value={perStroke ? 돈(perStroke) : ''}
+            onChange={(e) => {
+              const 숫자 = e.target.value.replace(/[^0-9]/g, '').slice(0, 8)
+              onPerStroke?.(숫자 ? Number(숫자) : 0)
+            }}
+          />
+          <em>원</em>
+        </label>
 
         {/*
           **주는 사람마다 부챗살 하나.**
@@ -113,6 +136,7 @@ export default function Rules() {
                   <i className="fan-head" aria-hidden="true" />
                   <MemberAvatar member={r.member} src={photos[r.member]} size={32} />
                   <b>{r.member}</b>
+                  {perStroke > 0 && <span className="fan-won">{돈(r.차 * perStroke)}원</span>}
                 </li>
               ))}
             </ul>

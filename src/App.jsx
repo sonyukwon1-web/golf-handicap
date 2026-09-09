@@ -351,7 +351,10 @@ export default function App() {
               <h2>우리 규칙</h2>
               <span className="hint">넷이 합의한 것</span>
             </div>
-            <Rules />
+            <Rules
+              perStroke={data.rules?.perStroke ?? 0}
+              onPerStroke={(원) => setData((d) => ({ ...d, rules: { ...d.rules, perStroke: 원 } }))}
+            />
           </section>
         )}
 
