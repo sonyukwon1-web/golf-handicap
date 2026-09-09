@@ -2051,22 +2051,19 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
 /* ── 우리 규칙 ────────────────────────────────────────── */
 .rules-stack { display: flex; flex-direction: column; gap: 12px; }
 
-/* 핸디 — 얼굴 · 이름 · 받는 타수 */
-.rules-handi {
+/* 핸디 사다리 — 넷을 한 줄로 세우고 사이마다 화살표로 몇 타인지 */
+.handi-chain {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
-.rules-handi li {
+.chain-row {
   display: flex;
   align-items: center;
   gap: 9px;
   font-size: 13.5px;
 }
-.rules-handi b { font-weight: 700; }
+.chain-row b { font-weight: 700; }
 .rules-stroke {
   margin-left: auto;
   font-size: 15px;
@@ -2075,7 +2072,45 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   color: var(--green);
 }
 /* 기준이 되는 사람은 숫자가 아니라 '기준' — 강조하지 않는다 */
-.rules-handi li:first-child .rules-stroke { font-size: 12.5px; font-weight: 650; color: var(--ink-3); }
+.handi-chain li:first-child .rules-stroke { font-size: 12.5px; font-weight: 650; color: var(--ink-3); }
+
+/* 얼굴 한가운데(34px 의 절반)로 선을 내려 사람과 사람을 잇는다 */
+.chain-arrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 24px;
+  padding-left: 17px;
+}
+.chain-arrow i {
+  width: 2px;
+  height: 100%;
+  background: var(--line-strong);
+  transform: translateX(-1px);
+  flex: 0 0 auto;
+  position: relative;
+}
+/* 선 끝의 화살촉 — 아래를 가리킨다 */
+.chain-arrow i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--line-strong);
+}
+.chain-arrow span {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
 
 /* 둘씩 붙었을 때 오가는 타수 */
 .rules-pairs {
@@ -2083,7 +2118,8 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   margin: 10px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  /* 좁은 폰에서 세 칸이 되면 '문 창 → 진 규' 처럼 글자마다 줄이 바뀐다 — 두 칸까지만 */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 6px;
 }
 .rules-pairs li {
@@ -2098,7 +2134,10 @@ table.score-grid .tcol { border-right: 1px solid var(--line); }
   font-size: 12.5px;
   color: var(--ink-2);
 }
+.rp-who { display: flex; align-items: center; gap: 5px; font-weight: 650; color: var(--ink); white-space: nowrap; }
+.rp-who i { font-style: normal; color: var(--green); font-weight: 800; }
 .rules-pairs b {
+  white-space: nowrap;
   font-size: 13.5px;
   font-weight: 750;
   color: var(--ink);

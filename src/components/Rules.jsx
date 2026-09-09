@@ -18,10 +18,18 @@ const 핸디 = [
   { member: '이지수', stroke: 15 },
 ]
 
-/* 둘이 붙었을 때 몇 타를 주고받나 — 차이만 적는다 (누가 주는지는 자리에서 정한다) */
+/*
+  둘이 붙었을 때 누가 누구에게 몇 타를 주나.
+
+  화살표는 **잘 치는 쪽 → 못 치는 쪽**. 여태 `문창 ↔ 지수 15타` 라고 양쪽
+  화살표로만 적어 두었더니, 숫자는 맞는데 누가 주는 쪽인지가 안 보였다.
+*/
 const 주고받기 = 핸디.flatMap((a, i) =>
-  핸디.slice(i + 1).map((b) => ({ a: a.member, b: b.member, 차: b.stroke - a.stroke })),
+  핸디.slice(i + 1).map((b) => ({ 주는이: a.member, 받는이: b.member, 차: b.stroke - a.stroke })),
 )
+
+/** 넷 다 성이 다르지 않아 이름 두 자로 부른다 — 좁은 칸에 화살표까지 들어가야 한다 */
+const 이름 = (m) => m.slice(1)
 
 const 규칙 = [
   {
@@ -81,22 +89,43 @@ export default function Rules() {
           <span className="hint">최문창 기준</span>
         </div>
 
-        <ul className="rules-handi">
-          {핸디.map((h) => (
-            <li key={h.member}>
-              <MemberAvatar member={h.member} src={photos[h.member]} size={34} />
-              <b>{h.member}</b>
-              <span className="rules-stroke">{h.stroke === 0 ? '기준' : `+${h.stroke}타`}</span>
-            </li>
-          ))}
-        </ul>
+        {/*
+          **사다리로 세운다.** 넷을 한 줄로 세우고 사이마다 몇 타가 오가는지
+          화살표에 적으면, 표를 읽지 않아도 순서와 간격이 한눈에 들어온다.
+        */}
+        <ol className="handi-chain">
+          {핸디.map((h, i) => {
+            const 다음 = 핸디[i + 1]
+            return (
+              <li key={h.member}>
+                <div className="chain-row">
+                  <MemberAvatar member={h.member} src={photos[h.member]} size={34} />
+                  <b>{h.member}</b>
+                  <span className="rules-stroke">{h.stroke === 0 ? '기준' : `+${h.stroke}타`}</span>
+                </div>
+                {다음 && (
+                  <div className="chain-arrow" aria-hidden="true">
+                    <i />
+                    <span>{다음.stroke - h.stroke}타</span>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ol>
 
-        <p className="rules-note">각자 차이 나는 만큼 시작할 때 서로 지급</p>
+        <p className="rules-note">
+          각자 차이 나는 만큼 시작할 때 서로 지급 — 화살표는 <b>주는 쪽 → 받는 쪽</b>
+        </p>
 
         <ul className="rules-pairs">
           {주고받기.map((p) => (
-            <li key={`${p.a}-${p.b}`}>
-              <span>{p.a.slice(1)} ↔ {p.b.slice(1)}</span>
+            <li key={`${p.주는이}-${p.받는이}`}>
+              <span className="rp-who">
+                {이름(p.주는이)}
+                <i aria-label="가 다음 사람에게">→</i>
+                {이름(p.받는이)}
+              </span>
               <b>{p.차}타</b>
             </li>
           ))}
