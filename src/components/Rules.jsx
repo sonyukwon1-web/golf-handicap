@@ -99,19 +99,26 @@ export default function Rules({ perStroke = 0, onPerStroke }) {
           타수만 있으면 자리에서 다시 곱해야 했다 — 15타면 얼마더라. 한 번
           적어 두면 넷 다 같은 금액을 본다 (기기끼리 맞춰지는 값이다).
         */}
-        <label className="per-stroke">
-          <span>타당</span>
-          <input
-            inputMode="numeric"
-            placeholder="0"
-            value={perStroke ? 돈(perStroke) : ''}
-            onChange={(e) => {
-              const 숫자 = e.target.value.replace(/[^0-9]/g, '').slice(0, 8)
-              onPerStroke?.(숫자 ? Number(숫자) : 0)
-            }}
-          />
-          <em>원</em>
-        </label>
+        {/*
+          비어 있을 때는 **적으라고 눈에 띄어야** 하고, 적고 나면 조용해야 한다.
+          안 적은 동안만 초록 바탕에 안내를 함께 띄운다.
+        */}
+        <div className="per-stroke-box" data-empty={perStroke ? undefined : 'true'}>
+          <label className="per-stroke">
+            <span>💵 타당</span>
+            <input
+              inputMode="numeric"
+              placeholder="금액 입력"
+              value={perStroke ? 돈(perStroke) : ''}
+              onChange={(e) => {
+                const 숫자 = e.target.value.replace(/[^0-9]/g, '').slice(0, 8)
+                onPerStroke?.(숫자 ? Number(숫자) : 0)
+              }}
+            />
+            <em>원</em>
+          </label>
+          {!perStroke && <p className="ps-hint">적어 두면 화살표마다 얼마인지 함께 뜹니다</p>}
+        </div>
 
         {/*
           **주는 사람마다 부챗살 하나.**
